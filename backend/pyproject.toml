@@ -1,0 +1,18 @@
+[project]
+name = "goldendata-backend"
+version = "0.1.0"
+description = "Registro de Modelos + Avaliação Contínua de Qualidade de IA (TJMG) — backend"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+# B008: padrão idiomático do FastAPI (Depends() em default de argumento).
+ignore = ["B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

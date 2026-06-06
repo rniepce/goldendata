@@ -1,0 +1,73 @@
+# =============================================================================
+# goldendata — ambiente de desenvolvimento (paridade dev/prod via containers).
+# Sobe Postgres + Keycloak + back-end + front-end. Em produção, cada serviço vai
+# para a stack institucional (K8s, Postgres on-prem/homologado, Keycloak do TJMG).
+# =============================================================================
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: goldendata
+      POSTGRES_PASSWORD: goldendata
+      POSTGRES_DB: goldendata
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/init.sh:/docker-entrypoint-initdb.d/00-init.sh:ro
+      - ./db/migrations:/migrations:ro
+      - ./db/seed:/seed:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U goldendata"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./infra/keycloak:/opt/keycloak/data/import:ro
+
+  backend:
+    build: ./backend
+    environment:
+      GOLDENDATA_ENVIRONMENT: dev
+      GOLDENDATA_DATABASE_URL: postgresql://goldendata:goldendata@db:5432/goldendata
+      GOLDENDATA_CORS_ORIGINS: http://localhost:5173
+      # iss no token vem do navegador (localhost); JWKS é buscado pela rede interna.
+      GOLDENDATA_OIDC_ISSUER: http://localhost:8080/realms/tjmg
+      GOLDENDATA_OIDC_JWKS_URL: http://keycloak:8080/realms/tjmg/protocol/openid-connect/certs
+      GOLDENDATA_OIDC_AUDIENCE: goldendata-api
+      GOLDENDATA_AUTH_DEV_INSECURE: "false"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      # Vite embute as VITE_* em build time — por isso vão como build args.
+      args:
+        VITE_API_URL: http://localhost:8000
+        VITE_OIDC_AUTHORITY: http://localhost:8080/realms/tjmg
+        VITE_OIDC_CLIENT_ID: goldendata-spa
+        VITE_OIDC_REDIRECT_URI: http://localhost:5173/
+    ports:
+      - "5173:8080"   # nginx escuta na 8080 dentro do container
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
