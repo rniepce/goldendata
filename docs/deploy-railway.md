@@ -4,6 +4,20 @@ Sim — dá para rodar **toda a plataforma no Railway**, sem mudar o código. Co
 
 > Para a **demonstração ao comitê**, o caminho abaixo sobe tudo em minutos. Para produção, veja as notas de hardening ao final.
 
+## ⚠️ Passo 0 — Root Directory (evita o erro "Railpack could not determine how to build")
+
+Este repositório é um **monorepo**: a raiz não é um app. Se você criar um serviço apontando para a raiz, o Railpack falha com *"Railpack could not determine how to build the app"*. **Crie um serviço por componente** e, em cada um, configure:
+
+**Settings → Source → Root Directory**:
+
+| Serviço | Root Directory |
+|---|---|
+| backend | `backend` |
+| frontend | `frontend` |
+| keycloak | `infra/keycloak` |
+
+Com o Root Directory apontando para a pasta certa, o Railway encontra o `Dockerfile` e o `railway.json` daquele serviço (já comitados em cada pasta, forçando o builder **DOCKERFILE**) e o Railpack nem é acionado. O Postgres não é um serviço de build — use o **plugin** de banco do Railway.
+
 ## 1. Postgres (plugin)
 
 Crie um banco PostgreSQL no projeto Railway. Ele expõe a variável `DATABASE_URL`.
@@ -19,7 +33,7 @@ done
 
 ## 2. Keycloak (serviço Docker)
 
-Crie um serviço a partir de `infra/keycloak/Dockerfile` (já embute o realm `tjmg`). Variáveis:
+Crie um serviço com **Root Directory = `infra/keycloak`** (o Dockerfile já embute o realm `tjmg`). Ao gerar o domínio público, escolha a **porta 8080** como target. Variáveis:
 
 | Variável | Valor |
 |---|---|
@@ -30,7 +44,7 @@ Crie um serviço a partir de `infra/keycloak/Dockerfile` (já embute o realm `tj
 
 Anote a URL pública → será a **authority OIDC** (`https://sso.../realms/tjmg`).
 
-## 3. Backend (serviço Docker — `backend/`)
+## 3. Backend (serviço Docker — Root Directory = `backend`)
 
 | Variável | Valor |
 |---|---|
@@ -43,9 +57,9 @@ Anote a URL pública → será a **authority OIDC** (`https://sso.../realms/tjmg
 
 O FastAPI escuta na 8000; o Railway roteia via `$PORT` automaticamente para serviços HTTP (ou ajuste o `CMD` para `--port $PORT`).
 
-## 4. Frontend (serviço Docker — `frontend/`)
+## 4. Frontend (serviço Docker — Root Directory = `frontend`)
 
-As `VITE_*` são **build-time** — configure-as como **build args/variáveis** do serviço (o `frontend/Dockerfile` já as declara como `ARG`):
+Ao gerar o domínio público, escolha a **porta 8080** como target (o nginx escuta nela). As `VITE_*` são **build-time** — configure-as como variáveis do serviço (o Railway as repassa como build args; o `frontend/Dockerfile` já as declara como `ARG`):
 
 | Variável | Valor |
 |---|---|
