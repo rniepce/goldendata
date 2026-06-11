@@ -62,8 +62,39 @@ def _decode(token: str) -> dict:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"Token inválido: {exc}") from exc
 
 
+DEMO_ROLES = ["coordenador_comite", "owner_ferramenta", "avaliador", "auditor_dpo", "admin"]
+
+
 def get_current_user(request: Request) -> CurrentUser:
-    claims = _decode(_bearer_token(request))
+    # Modo NONE (demonstração): sem login — todo acesso é o usuário demo com
+    # todos os papéis. A trilha de auditoria registra ator "demo".
+    if settings.auth_mode == "none":
+        return CurrentUser(
+            sub="demo",
+            nome="Usuário de Demonstração",
+            email="demo@tjmg.jus.br",
+            roles=list(DEMO_ROLES),
+        )
+
+    token = _bearer_token(request)
+
+    # Modo LOCAL (MVP): token HS256 emitido pelo próprio backend, roles na claim.
+    if settings.auth_mode == "local":
+        from . import security_local
+
+        try:
+            claims = security_local.decode_token(token)
+        except jwt.PyJWTError as exc:
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"Token inválido: {exc}") from exc
+        return CurrentUser(
+            sub=claims["sub"],
+            nome=claims.get("name") or claims["sub"],
+            email=claims.get("email"),
+            roles=list(claims.get("roles") or []),
+        )
+
+    # Modo OIDC (Keycloak): roles em realm_access.roles.
+    claims = _decode(token)
     realm_roles = (claims.get("realm_access") or {}).get("roles", [])
     return CurrentUser(
         sub=claims["sub"],

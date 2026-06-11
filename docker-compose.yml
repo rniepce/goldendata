@@ -24,6 +24,8 @@ services:
       retries: 10
 
   keycloak:
+    # Opcional: só sobe com `docker compose --profile oidc up` (modo com login Keycloak).
+    profiles: ["oidc"]
     image: quay.io/keycloak/keycloak:26.0
     command: ["start-dev", "--import-realm"]
     environment:
@@ -42,18 +44,18 @@ services:
       GOLDENDATA_ENVIRONMENT: dev
       GOLDENDATA_DATABASE_URL: postgresql://goldendata:goldendata@db:5432/goldendata
       GOLDENDATA_CORS_ORIGINS: http://localhost:5173
-      # iss no token vem do navegador (localhost); JWKS é buscado pela rede interna.
-      GOLDENDATA_OIDC_ISSUER: http://localhost:8080/realms/tjmg
-      GOLDENDATA_OIDC_JWKS_URL: http://keycloak:8080/realms/tjmg/protocol/openid-connect/certs
-      GOLDENDATA_OIDC_AUDIENCE: goldendata-api
+      # Modo de autenticação: "none" (sem login — demonstração) | "local" | "oidc".
+      GOLDENDATA_AUTH_MODE: none
+      # Para reativar o Keycloak (modo oidc), descomente o serviço abaixo e estas vars:
+      # GOLDENDATA_OIDC_ISSUER: http://localhost:8080/realms/tjmg
+      # GOLDENDATA_OIDC_JWKS_URL: http://keycloak:8080/realms/tjmg/protocol/openid-connect/certs
+      # GOLDENDATA_OIDC_AUDIENCE: goldendata-api
       GOLDENDATA_AUTH_DEV_INSECURE: "false"
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
-      keycloak:
-        condition: service_started
 
   frontend:
     build:
@@ -61,9 +63,12 @@ services:
       # Vite embute as VITE_* em build time — por isso vão como build args.
       args:
         VITE_API_URL: http://localhost:8000
-        VITE_OIDC_AUTHORITY: http://localhost:8080/realms/tjmg
-        VITE_OIDC_CLIENT_ID: goldendata-spa
-        VITE_OIDC_REDIRECT_URI: http://localhost:5173/
+        VITE_AUTH_MODE: none
+        # Para reativar o Keycloak (modo oidc):
+        # VITE_AUTH_MODE: oidc
+        # VITE_OIDC_AUTHORITY: http://localhost:8080/realms/tjmg
+        # VITE_OIDC_CLIENT_ID: goldendata-spa
+        # VITE_OIDC_REDIRECT_URI: http://localhost:5173/
     ports:
       - "5173:8080"   # nginx escuta na 8080 dentro do container
     depends_on:

@@ -18,7 +18,18 @@ class Settings(BaseSettings):
     db_pool_min: int = 1
     db_pool_max: int = 10
 
-    # Keycloak / OIDC
+    # Modo de autenticação:
+    #   "none"  — SEM LOGIN (demonstração; todo acesso é um usuário demo com todos
+    #             os papéis). NÃO usar com dados reais — qualquer pessoa com a URL
+    #             lê e grava.
+    #   "local" — e-mail+senha emitidos pelo próprio backend (MVP com login).
+    #   "oidc"  — Keycloak (obrigatório na produção institucional, CESEC/CNJ 140).
+    auth_mode: str = "none"
+    # Segredo HS256 do modo local (obrigatório quando auth_mode=local).
+    auth_secret: str = ""
+    auth_token_ttl_hours: int = 8
+
+    # Keycloak / OIDC (usados quando auth_mode=oidc)
     oidc_issuer: str = "http://localhost:8080/realms/tjmg"
     oidc_audience: str = "goldendata-api"
     oidc_jwks_url: str = "http://localhost:8080/realms/tjmg/protocol/openid-connect/certs"

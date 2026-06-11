@@ -1,11 +1,17 @@
 /*
- * Autenticação OIDC contra Keycloak usando oidc-client-ts.
- * Diretriz CESEC/COARF: OpenID Connect via Keycloak, identidade personalíssima.
+ * Camada de autenticação com MODOS comutáveis (env.authMode):
  *
- * Expõe:
- *  - userManager: instância única do UserManager (PKCE, code flow);
- *  - getAccessToken(): token corrente para o cabeçalho Authorization;
- *  - AuthProvider + useAuth(): contexto React com estado/ações de sessão.
+ *  - 'none' — SEM LOGIN (demonstração): todo acesso usa um usuário demo com
+ *    todos os papéis; nenhum token é enviado (o backend, em GOLDENDATA_AUTH_MODE
+ *    =none, também dispensa o Authorization). NÃO usar com dados reais.
+ *
+ *  - 'oidc' — login institucional via Keycloak (oidc-client-ts, PKCE/code flow).
+ *    Diretriz CESEC/COARF para produção: OIDC + MFA, identidade personalíssima.
+ *
+ * Exposto (estável para o restante do app):
+ *  - getAccessToken(): token corrente para o cabeçalho Authorization (null em 'none');
+ *  - AuthProvider + useAuth(): contexto React com estado/ações de sessão;
+ *  - hasAnyRole(): verificação RBAC.
  */
 
 import { UserManager, WebStorageStateStore, User } from 'oidc-client-ts';
@@ -22,43 +28,6 @@ import {
 import { env } from './env';
 import type { Role, UserInfo } from './types';
 
-export const userManager = new UserManager({
-  authority: env.oidcAuthority,
-  client_id: env.oidcClientId,
-  redirect_uri: env.oidcRedirectUri,
-  post_logout_redirect_uri: window.location.origin,
-  response_type: 'code',
-  scope: 'openid profile email',
-  // PKCE é o padrão para SPA público no oidc-client-ts.
-  automaticSilentRenew: true,
-  // Mantém a sessão entre reloads sem armazenar tokens fora do escopo do app.
-  userStore: new WebStorageStateStore({ store: window.localStorage }),
-  monitorSession: true,
-});
-
-let currentUser: User | null = null;
-
-userManager.events.addUserLoaded((user) => {
-  currentUser = user;
-});
-userManager.events.addUserUnloaded(() => {
-  currentUser = null;
-});
-userManager.events.addAccessTokenExpired(() => {
-  void userManager.signinSilent().catch(() => undefined);
-});
-
-/** Token de acesso corrente (usado pelo cliente de API). */
-export async function getAccessToken(): Promise<string | null> {
-  if (currentUser && !currentUser.expired) {
-    return currentUser.access_token;
-  }
-  const user = await userManager.getUser();
-  currentUser = user;
-  return user && !user.expired ? user.access_token : null;
-}
-
-/** Extrai os papéis do token Keycloak (realm_access.roles), filtrando os conhecidos. */
 const KNOWN_ROLES: Role[] = [
   'coordenador_comite',
   'owner_ferramenta',
@@ -66,6 +35,60 @@ const KNOWN_ROLES: Role[] = [
   'auditor_dpo',
   'admin',
 ];
+
+/** Usuário fixo do modo de demonstração (espelha o backend em auth_mode=none). */
+const DEMO_USER: UserInfo = {
+  sub: 'demo',
+  nome: 'Usuário de Demonstração',
+  email: 'demo@tjmg.jus.br',
+  roles: [...KNOWN_ROLES],
+};
+
+// ---------------------------------------------------------------------------
+// Modo OIDC — UserManager preguiçoso (só instancia quando o modo é 'oidc')
+// ---------------------------------------------------------------------------
+
+let manager: UserManager | null = null;
+let currentUser: User | null = null;
+
+function getUserManager(): UserManager {
+  if (!manager) {
+    manager = new UserManager({
+      authority: env.oidcAuthority,
+      client_id: env.oidcClientId,
+      redirect_uri: env.oidcRedirectUri,
+      post_logout_redirect_uri: window.location.origin,
+      response_type: 'code',
+      scope: 'openid profile email',
+      automaticSilentRenew: true,
+      userStore: new WebStorageStateStore({ store: window.localStorage }),
+      monitorSession: true,
+    });
+    manager.events.addUserLoaded((user) => {
+      currentUser = user;
+    });
+    manager.events.addUserUnloaded(() => {
+      currentUser = null;
+    });
+    manager.events.addAccessTokenExpired(() => {
+      void manager?.signinSilent().catch(() => undefined);
+    });
+  }
+  return manager;
+}
+
+/** Token de acesso corrente (usado pelo cliente de API). Null no modo 'none'. */
+export async function getAccessToken(): Promise<string | null> {
+  if (env.authMode === 'none') {
+    return null;
+  }
+  if (currentUser && !currentUser.expired) {
+    return currentUser.access_token;
+  }
+  const user = await getUserManager().getUser();
+  currentUser = user;
+  return user && !user.expired ? user.access_token : null;
+}
 
 function rolesFromUser(user: User): Role[] {
   const profile = user.profile as Record<string, unknown>;
@@ -86,8 +109,8 @@ export interface AuthState {
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }): ReactNode {
-  const [user, setUser] = useState<UserInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<UserInfo | null>(env.authMode === 'none' ? DEMO_USER : null);
+  const [isLoading, setIsLoading] = useState(env.authMode !== 'none');
   const [error, setError] = useState<string | null>(null);
 
   const applyUser = useCallback((oidcUser: User | null) => {
@@ -105,17 +128,20 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactNode {
   }, []);
 
   useEffect(() => {
+    if (env.authMode === 'none') {
+      return; // sem fluxo de login: o usuário demo já está aplicado.
+    }
     let active = true;
+    const um = getUserManager();
     async function bootstrap(): Promise<void> {
       try {
-        // Conclui o fluxo de callback, se aplicável.
         if (window.location.pathname.startsWith('/auth/callback')) {
-          const oidcUser = await userManager.signinRedirectCallback();
+          const oidcUser = await um.signinRedirectCallback();
           currentUser = oidcUser;
           window.history.replaceState({}, document.title, '/catalogo');
           if (active) applyUser(oidcUser);
         } else {
-          const oidcUser = await userManager.getUser();
+          const oidcUser = await um.getUser();
           currentUser = oidcUser;
           if (active) applyUser(oidcUser);
         }
@@ -129,22 +155,28 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactNode {
 
     const onLoaded = (oidcUser: User): void => applyUser(oidcUser);
     const onUnloaded = (): void => setUser(null);
-    userManager.events.addUserLoaded(onLoaded);
-    userManager.events.addUserUnloaded(onUnloaded);
+    um.events.addUserLoaded(onLoaded);
+    um.events.addUserUnloaded(onUnloaded);
     return () => {
       active = false;
-      userManager.events.removeUserLoaded(onLoaded);
-      userManager.events.removeUserUnloaded(onUnloaded);
+      um.events.removeUserLoaded(onLoaded);
+      um.events.removeUserUnloaded(onUnloaded);
     };
   }, [applyUser]);
 
   const login = useCallback(async () => {
+    if (env.authMode === 'none') {
+      return;
+    }
     setError(null);
-    await userManager.signinRedirect();
+    await getUserManager().signinRedirect();
   }, []);
 
   const logout = useCallback(async () => {
-    await userManager.signoutRedirect();
+    if (env.authMode === 'none') {
+      return;
+    }
+    await getUserManager().signoutRedirect();
   }, []);
 
   const value = useMemo<AuthState>(

@@ -74,9 +74,15 @@ export function Layout(): ReactNode {
               </span>
             </div>
           )}
-          <button type="button" className="gd-btn gd-btn--secondary gd-btn--sm" onClick={() => void logout()}>
-            Sair
-          </button>
+          {env.authMode !== 'none' && (
+            <button
+              type="button"
+              className="gd-btn gd-btn--secondary gd-btn--sm"
+              onClick={() => void logout()}
+            >
+              Sair
+            </button>
+          )}
         </div>
       </header>
 

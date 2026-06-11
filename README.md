@@ -14,7 +14,7 @@ As duas se retroalimentam: o registro **versiona** ferramentas/agentes/prompts; 
 | Front-end | React + TypeScript (Vite), tokens aproximando o Design System TJMG, acessível (WCAG) |
 | Back-end | Python + FastAPI, REST, stateless, 12-factor |
 | Banco | PostgreSQL (Supabase apenas como Postgres gerenciado no MVP; migrations versionadas) |
-| Autenticação | Keycloak (OIDC/PKCE) + RBAC + MFA |
+| Autenticação | Modos comutáveis: `none` (sem login — demonstração) / `local` (e-mail+senha) / `oidc` (Keycloak + MFA, produção institucional) |
 | Auditoria | `audit_log` append-only e encadeado por hash; horário HLB (NTP) |
 | Containers | Docker / docker-compose (paridade dev/prod) |
 
@@ -36,21 +36,22 @@ docs/              Matriz de conformidade CNJ 615/LGPD, modelo de dados, seguran
 docker compose up --build
 ```
 
-Sobe Postgres (com migrations + seed aplicados na inicialização), Keycloak (realm `tjmg` importado), back-end (`:8000`) e front-end (`:5173`).
+Sobe Postgres (com migrations + seed aplicados na inicialização), back-end (`:8000`) e front-end (`:5173`).
 
 - API/health: http://localhost:8000/health · OpenAPI: http://localhost:8000/docs
 - Front-end: http://localhost:5173
-- Keycloak (admin/admin): http://localhost:8080
 
-### Usuários de demonstração (Keycloak realm `tjmg`)
+### Autenticação
 
-| Usuário | Senha | Papel |
+A demonstração roda **sem login** (`GOLDENDATA_AUTH_MODE=none` / `VITE_AUTH_MODE=none`): todo acesso entra como *Usuário de Demonstração* com todos os papéis. **Não use este modo com dados reais** — qualquer pessoa com a URL lê e grava.
+
+Modos disponíveis (troca por configuração, sem mudar código):
+
+| Modo | O que é | Quando usar |
 |---|---|---|
-| `coordenador` | `coordenador` | coordenador_comite |
-| `owner` | `owner` | owner_ferramenta |
-| `avaliador` | `avaliador` | avaliador |
-| `dpo` | `dpo` | auditor_dpo |
-| `admin-app` | `admin-app` | admin |
+| `none` | Sem login; usuário demo com todos os papéis | Demonstração ao comitê |
+| `local` | E-mail+senha no próprio backend (PBKDF2 + JWT; migration `0006`) | MVP com login, sem Keycloak |
+| `oidc` | Keycloak (realm em `infra/keycloak/`; suba com `docker compose --profile oidc up`) | Produção institucional (CESEC: OIDC + MFA) |
 
 ## Fluxo de demonstração ponta a ponta
 
