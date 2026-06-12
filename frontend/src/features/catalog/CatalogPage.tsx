@@ -123,7 +123,7 @@ export function CatalogPage(): ReactNode {
                       <RiskBadge risco={tool.categoria_risco} />
                     </td>
                     <td>{tool.revisao_humana_obrigatoria ? 'Obrigatória' : 'Opcional'}</td>
-                    <td>{tool.status ?? '—'}</td>
+                    <td>{tool.status_ciclo_vida ?? '—'}</td>
                     <td>
                       <Link className="gd-btn gd-btn--secondary gd-btn--sm" to={`/ferramentas/${tool.id}`}>
                         Abrir ficha

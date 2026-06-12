@@ -56,7 +56,7 @@ export interface Tool {
   explicacao_linguagem_simples?: string;
   sinapses_id?: string;
   proxima_revisao_em?: string; // date ISO
-  status?: string;
+  status_ciclo_vida?: string;
 }
 
 export interface ToolInput {

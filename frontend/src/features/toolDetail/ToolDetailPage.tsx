@@ -107,7 +107,7 @@ export function ToolDetailPage(): ReactNode {
               <MetaItem label="Unidade responsável">{ferramenta.unidade_responsavel}</MetaItem>
               <MetaItem label="ID Sinapses">{ferramenta.sinapses_id ?? '—'}</MetaItem>
               <MetaItem label="Próxima revisão">{ferramenta.proxima_revisao_em ?? '—'}</MetaItem>
-              <MetaItem label="Status">{ferramenta.status ?? '—'}</MetaItem>
+              <MetaItem label="Status">{ferramenta.status_ciclo_vida ?? '—'}</MetaItem>
             </div>
           </Card>
         )}
