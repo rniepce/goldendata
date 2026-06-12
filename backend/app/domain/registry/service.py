@@ -50,27 +50,32 @@ def get_tool(conn: Any, tool_id: str) -> dict | None:
 
 
 def get_ficha_tecnica(conn: Any, tool_id: str) -> dict | None:
-    """Visão consolidada da ficha técnica: ferramenta + dados + versões + riscos + anexos."""
+    """Visão consolidada da ficha técnica: ferramenta + dados + versões + riscos + anexos.
+
+    Contrato: a ferramenta vai aninhada em "ferramenta" (tipo ToolFicha do front).
+    """
     tool = get_tool(conn, tool_id)
     if tool is None:
         return None
-    tool["agent_spec"] = fetch_one(conn, "SELECT * FROM agent_spec WHERE tool_id = %s", (tool_id,))
-    tool["data_inventory"] = fetch_all(
-        conn, "SELECT * FROM data_inventory WHERE tool_id = %s ORDER BY criado_em", (tool_id,)
-    )
-    tool["prompt_versions"] = fetch_all(
-        conn, "SELECT * FROM prompt_version WHERE tool_id = %s ORDER BY criado_em DESC", (tool_id,)
-    )
-    tool["tool_versions"] = fetch_all(
-        conn, "SELECT * FROM tool_version WHERE tool_id = %s ORDER BY criado_em DESC", (tool_id,)
-    )
-    tool["risks"] = fetch_all(
-        conn, "SELECT * FROM risk_register WHERE tool_id = %s ORDER BY criado_em DESC", (tool_id,)
-    )
-    tool["attachments"] = fetch_all(
-        conn, "SELECT * FROM attachment WHERE tool_id = %s ORDER BY criado_em DESC", (tool_id,)
-    )
-    return tool
+    return {
+        "ferramenta": tool,
+        "agent_spec": fetch_one(conn, "SELECT * FROM agent_spec WHERE tool_id = %s", (tool_id,)),
+        "data_inventory": fetch_all(
+            conn, "SELECT * FROM data_inventory WHERE tool_id = %s ORDER BY criado_em", (tool_id,)
+        ),
+        "prompt_versions": fetch_all(
+            conn, "SELECT * FROM prompt_version WHERE tool_id = %s ORDER BY criado_em DESC", (tool_id,)
+        ),
+        "tool_versions": fetch_all(
+            conn, "SELECT * FROM tool_version WHERE tool_id = %s ORDER BY criado_em DESC", (tool_id,)
+        ),
+        "risks": fetch_all(
+            conn, "SELECT * FROM risk_register WHERE tool_id = %s ORDER BY criado_em DESC", (tool_id,)
+        ),
+        "attachments": fetch_all(
+            conn, "SELECT * FROM attachment WHERE tool_id = %s ORDER BY criado_em DESC", (tool_id,)
+        ),
+    }
 
 
 def create_prompt_version(conn: Any, tool_id: str, body: schemas.PromptVersionCreate, autor_sub: str) -> dict:
