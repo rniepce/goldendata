@@ -39,6 +39,16 @@ class Settings(BaseSettings):
     # Segurança de saída
     hsts_max_age: int = 31536000  # 1 ano (CESEC §4.2)
 
+    # MCP (Model Context Protocol) — servidor que permite a IAs operar a plataforma.
+    mcp_enabled: bool = True
+    # Token de acesso ao MCP. Se vazio, o MCP fica ABERTO (somente demo). Se
+    # definido, toda chamada deve enviar este token (Authorization: Bearer ...).
+    mcp_token: str = ""
+
+    @property
+    def mcp_token_list(self) -> list[str]:
+        return [t.strip() for t in self.mcp_token.split(",") if t.strip()]
+
     @property
     def cors_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]

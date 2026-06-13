@@ -4,17 +4,22 @@ Back-end stateless, 12-factor, REST. Headers de segurança e CORS conforme CESEC
 """
 from __future__ import annotations
 
+import secrets
+from contextlib import AsyncExitStack, asynccontextmanager
+
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 from app.core.config import settings
-from app.core.db import execute
+from app.core.db import execute, get_pool
 from app.core.deps import Ctx, get_ctx
 from app.domain.evaluation.router import router as evaluation_router
 from app.domain.governance.router import router as governance_router
 from app.domain.registry.router import router as registry_router
+from app.mcp_server import mcp as mcp_server
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -32,19 +37,56 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
+class MCPAuthMiddleware(BaseHTTPMiddleware):
+    """Exige Bearer token nas rotas do MCP quando GOLDENDATA_MCP_TOKEN está definido.
+
+    Sem token configurado o MCP fica aberto (somente demo, coerente com auth_mode=none).
+    Comparação em tempo constante (CESEC); aceita múltiplos tokens (rotação).
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        path = request.url.path
+        if path == "/mcp" or path.startswith("/mcp/"):
+            tokens = settings.mcp_token_list
+            if tokens:
+                auth = request.headers.get("Authorization", "")
+                presented = auth[7:].strip() if auth[:7].lower() == "bearer " else ""
+                ok = bool(presented) and any(secrets.compare_digest(presented, t) for t in tokens)
+                if not ok:
+                    return JSONResponse({"detail": "MCP: token inválido ou ausente"}, status_code=401)
+        return await call_next(request)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Abre o session manager do MCP (Streamable HTTP) e o pool psycopg no startup."""
+    async with AsyncExitStack() as stack:
+        if settings.mcp_enabled:
+            await stack.enter_async_context(mcp_server.session_manager.run())
+        get_pool()  # inicializa o ConnectionPool (open=True) de forma determinística
+        try:
+            yield
+        finally:
+            get_pool().close()
+
+
 app = FastAPI(
     title="goldendata — Governança e Qualidade de IA (TJMG)",
     version="0.1.0",
     description="Registro de Modelos/Ficha Técnica (3.2) + Avaliação Contínua de Qualidade (3.3).",
+    lifespan=lifespan,
 )
 
 app.add_middleware(SecurityHeadersMiddleware)
+if settings.mcp_enabled:
+    app.add_middleware(MCPAuthMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Mcp-Session-Id"],  # necessário p/ clientes browser do MCP
 )
 
 app.include_router(registry_router, prefix=settings.api_prefix)
@@ -69,3 +111,9 @@ def me(ctx: Ctx = Depends(get_ctx)) -> dict:
         (ctx.user.sub, ctx.user.nome, ctx.user.email),
     )
     return {"sub": ctx.user.sub, "nome": ctx.user.nome, "email": ctx.user.email, "roles": ctx.user.roles}
+
+
+# Servidor MCP montado por último: Mount("/") captura o que não casou acima.
+# Endpoint efetivo: https://<host>/mcp (Streamable HTTP).
+if settings.mcp_enabled:
+    app.mount("/", mcp_server.streamable_http_app())
