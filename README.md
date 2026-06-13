@@ -7,6 +7,8 @@ Plataforma institucional única do **comitê de IA do TJMG** que cobre duas nece
 
 As duas se retroalimentam: o registro **versiona** ferramentas/agentes/prompts; a avaliação **testa cada versão**, decide o gate e gera os indicadores que voltam à ficha técnica e à auditoria.
 
+A plataforma também expõe um **servidor MCP** (Model Context Protocol) para que IAs (Claude e outros) **operem o goldendata diretamente** — consultar o catálogo, registrar ferramentas, anotar avaliações e decidir o gate, tudo com trilha de auditoria. Ver [docs/mcp.md](docs/mcp.md).
+
 ## Arquitetura (conforme COARF/CESEC/Conod)
 
 | Camada | Tecnologia |
@@ -77,6 +79,7 @@ A verificação ponta a ponta (jornada acima, imutabilidade da auditoria, RBAC a
 - [Matriz CNJ 615/2025 + LGPD](docs/conformidade-cnj615.md)
 - [Modelo de dados](docs/modelo-de-dados.md)
 - [Segurança (CESEC)](docs/seguranca-cesec.md)
+- [Servidor MCP (operar por IAs)](docs/mcp.md)
 - [Deploy no Railway](docs/deploy-railway.md) (alternativa ao Supabase; hospeda toda a stack)
 
 > Roadmap: **V1** — SDK/telemetria (captura automática de aceite/correção), verificação de citações contra base oficial, RIPD/AIA, export Sinapses, incidentes 72h, K8s. **V2** — NLI/faithfulness e LLM-as-judge calibrado on-prem, drift/alertas, migração à stack institucional plena (Postgres on-prem, Vault, ELK).
