@@ -44,10 +44,18 @@ class Settings(BaseSettings):
     # Token de acesso ao MCP. Se vazio, o MCP fica ABERTO (somente demo). Se
     # definido, toda chamada deve enviar este token (Authorization: Bearer ...).
     mcp_token: str = ""
+    # Hosts permitidos no header Host do MCP (proteção anti DNS-rebinding do SDK).
+    # CSV com o domínio público (ex.: "goldendata-backend-production.up.railway.app").
+    # Se vazio, a proteção é desligada (apropriado para dev/local atrás de token+TLS).
+    mcp_allowed_hosts: str = ""
 
     @property
     def mcp_token_list(self) -> list[str]:
         return [t.strip() for t in self.mcp_token.split(",") if t.strip()]
+
+    @property
+    def mcp_allowed_hosts_list(self) -> list[str]:
+        return [h.strip() for h in self.mcp_allowed_hosts.split(",") if h.strip()]
 
     @property
     def cors_list(self) -> list[str]:

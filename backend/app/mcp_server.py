@@ -13,17 +13,32 @@ from __future__ import annotations
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
+from app.core.config import settings
 from app.core.db import connection, fetch_all
 from app.domain.evaluation import schemas as eval_schemas
 from app.domain.evaluation import service as eval_svc
 from app.domain.registry import schemas as reg_schemas
 from app.domain.registry import service as reg_svc
 
+# Proteção anti DNS-rebinding do SDK: atrás do proxy do Railway, o header Host é
+# o domínio público — precisa estar na allowlist. Em dev (lista vazia) a proteção
+# é desligada, pois o acesso já é protegido por token Bearer + TLS.
+_allowed_hosts = settings.mcp_allowed_hosts_list
+if _allowed_hosts:
+    _transport_security = TransportSecuritySettings(
+        allowed_hosts=_allowed_hosts + [f"{h}:*" for h in _allowed_hosts],
+        allowed_origins=["*"],
+    )
+else:
+    _transport_security = TransportSecuritySettings(enable_dns_rebinding_protection=False)
+
 mcp = FastMCP(
     "goldendata",
     stateless_http=True,   # sem estado de sessão entre chamadas (réplicas/proxy)
     json_response=True,    # respostas JSON simples em vez de stream SSE
+    transport_security=_transport_security,
 )
 
 # Ator fixo da auditoria para operações via MCP (a trigger audit_capture lê isto).
