@@ -37,7 +37,7 @@ def create_tool(conn: Any, body: schemas.ToolCreate, owner_sub: str) -> dict:
                              analista_responsavel, documento_origem, data_analise, observacoes,
                              origem_registro)
            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
-                   COALESCE(%s, 'rascunho'),
+                   COALESCE(%s, 'rascunho')::lifecycle_stage,
                    %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING *""",
         (
             body.codigo_institucional, body.nome, body.tipo, body.descricao,
