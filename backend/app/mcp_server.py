@@ -34,11 +34,35 @@ if _allowed_hosts:
 else:
     _transport_security = TransportSecuritySettings(enable_dns_rebinding_protection=False)
 
+# OAuth (claude.ai web): liga um Authorization Server embutido via SDK. O SDK passa
+# a proteger /mcp e a servir os .well-known + WWW-Authenticate. O token estático
+# continua válido (load_access_token o reconhece), então o CLI não quebra.
+_auth_settings = None
+_auth_provider = None
+if settings.mcp_oauth_enabled and settings.mcp_public_url and settings.mcp_oauth_jwt_secret:
+    from mcp.server.auth.settings import AuthSettings, ClientRegistrationOptions, RevocationOptions
+    from pydantic import AnyHttpUrl
+
+    from app.core.mcp_oauth import GoldendataOAuthProvider
+
+    _auth_provider = GoldendataOAuthProvider()
+    _auth_settings = AuthSettings(
+        issuer_url=AnyHttpUrl(settings.mcp_public_url),
+        resource_server_url=AnyHttpUrl(f"{settings.mcp_public_url}/mcp"),
+        required_scopes=["user"],
+        client_registration_options=ClientRegistrationOptions(
+            enabled=True, valid_scopes=["user"], default_scopes=["user"],
+        ),
+        revocation_options=RevocationOptions(enabled=True),
+    )
+
 mcp = FastMCP(
     "goldendata",
     stateless_http=True,   # sem estado de sessão entre chamadas (réplicas/proxy)
     json_response=True,    # respostas JSON simples em vez de stream SSE
     transport_security=_transport_security,
+    auth_server_provider=_auth_provider,  # None quando OAuth desligado
+    auth=_auth_settings,
 )
 
 # Ator fixo da auditoria para operações via MCP (a trigger audit_capture lê isto).

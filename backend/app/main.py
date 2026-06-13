@@ -78,7 +78,9 @@ app = FastAPI(
 )
 
 app.add_middleware(SecurityHeadersMiddleware)
-if settings.mcp_enabled:
+# Com OAuth ligado, o próprio SDK protege /mcp (401 + WWW-Authenticate). O
+# middleware de Bearer estático só atua quando o OAuth está desligado.
+if settings.mcp_enabled and not settings.mcp_oauth_enabled:
     app.add_middleware(MCPAuthMiddleware)
 app.add_middleware(
     CORSMiddleware,

@@ -75,14 +75,33 @@ stdio; `mcp-remote` faz a ponte e repassa o header):
 }
 ```
 
-## claude.ai (web) / interface "Connectors"
+## claude.ai (web) / interface "Connectors" — via OAuth
 
 A interface de **Connectors** (web e o "Add custom connector" do Desktop) **não usa
-token Bearer estático** — ela exige **OAuth** (faz *dynamic client registration*
-contra o servidor). Por isso aparece o erro *"Couldn't register with the sign-in
-service / add an OAuth Client ID"*. Hoje o servidor não expõe OAuth, então **use o
-Claude Code CLI** (acima). Habilitar a via web exigiria adicionar um *authorization
-server* OAuth ao MCP (roadmap).
+token Bearer estático** — ela exige **OAuth 2.1 + PKCE** com discovery `.well-known`.
+O servidor expõe um **Authorization Server embutido** (via o SDK do MCP) que liga
+isso por configuração:
+
+1. No backend (Railway), defina:
+   - `GOLDENDATA_MCP_OAUTH_ENABLED=true`
+   - `GOLDENDATA_MCP_PUBLIC_URL=https://<backend>` (sem `/mcp`)
+   - `GOLDENDATA_MCP_OAUTH_JWT_SECRET=<openssl rand -hex 32>`
+   - mantenha `GOLDENDATA_MCP_ALLOWED_HOSTS=<backend>` (host público).
+2. Valide o discovery: `GET /.well-known/oauth-protected-resource/mcp` e
+   `GET /.well-known/oauth-authorization-server` (deve listar `registration_endpoint`
+   e `code_challenge_methods_supported: ["S256"]`); `POST /mcp` sem token → **401**
+   com header `WWW-Authenticate`.
+3. No claude.ai: **Settings → Connectors → Add custom connector**, cole a URL
+   `https://<backend>/mcp`. **Não** precisa colar Client ID — o Claude se
+   auto-registra (DCR). Clique **Connect** e autorize.
+
+O **token estático continua válido em paralelo** (o Claude Code CLI segue
+funcionando com `--header`). Detalhes do AS: [`backend/app/core/mcp_oauth.py`](../backend/app/core/mcp_oauth.py).
+
+> Demo: o `authorize` faz **auto-consent** (sem tela de login) — coerente com o
+> `auth_mode=none` (a API já é aberta). O estado OAuth é em memória (rode **1
+> réplica**). **Produção:** ative `auth_mode` real e troque o AS embutido por um
+> Resource Server puro apontando o Keycloak (RS256/JWKS, ver `security_keycloak.py`).
 
 ## Teste manual (curl)
 

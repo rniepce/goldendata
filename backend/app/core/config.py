@@ -49,6 +49,15 @@ class Settings(BaseSettings):
     # Se vazio, a proteção é desligada (apropriado para dev/local atrás de token+TLS).
     mcp_allowed_hosts: str = ""
 
+    # OAuth do MCP — necessário para o connector do claude.ai (web/Desktop), que
+    # só fala OAuth 2.1 + PKCE (não aceita Bearer estático). Authorization Server
+    # embutido via o SDK do MCP. Mantém o token estático válido em paralelo (CLI).
+    mcp_oauth_enabled: bool = False
+    mcp_public_url: str = ""                   # URL pública do backend (issuer/resource)
+    mcp_oauth_jwt_secret: str = ""             # HS256; gere com: openssl rand -hex 32
+    mcp_oauth_token_ttl_seconds: int = 28800   # 8 h (sem refresh na demo; alinha com o sistema)
+    mcp_oauth_code_ttl_seconds: int = 60       # 60 s (code de uso único)
+
     @property
     def mcp_token_list(self) -> list[str]:
         return [t.strip() for t in self.mcp_token.split(",") if t.strip()]
