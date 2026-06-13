@@ -121,6 +121,11 @@ export function CatalogPage(): ReactNode {
                     <td>{tool.unidade_responsavel}</td>
                     <td>
                       <RiskBadge risco={tool.categoria_risco} />
+                      {tool.categoria_risco_cnj && (
+                        <div className="gd-mono" style={{ fontSize: '0.8rem', opacity: 0.75, marginTop: '0.25rem' }}>
+                          {tool.categoria_risco_cnj}
+                        </div>
+                      )}
                     </td>
                     <td>{tool.revisao_humana_obrigatoria ? 'Obrigatória' : 'Opcional'}</td>
                     <td>{tool.status_ciclo_vida ?? '—'}</td>

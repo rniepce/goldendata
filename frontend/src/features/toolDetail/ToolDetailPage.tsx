@@ -26,6 +26,7 @@ type SectionId =
   | 'identificacao'
   | 'risco'
   | 'proposito'
+  | 'governanca'
   | 'modelos'
   | 'prompts'
   | 'dados'
@@ -37,6 +38,7 @@ const SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'identificacao', label: 'Identificação' },
   { id: 'risco', label: 'Risco e vedações' },
   { id: 'proposito', label: 'Propósito e limites' },
+  { id: 'governanca', label: 'Dossiê GEX-IA' },
   { id: 'modelos', label: 'Modelo-base e versões' },
   { id: 'prompts', label: 'Prompts' },
   { id: 'dados', label: 'Dados e LGPD' },
@@ -118,6 +120,9 @@ export function ToolDetailPage(): ReactNode {
               <MetaItem label="Categoria de risco">
                 <RiskBadge risco={ferramenta.categoria_risco} />
               </MetaItem>
+              <MetaItem label="Categoria CNJ 615">
+                {ferramenta.categoria_risco_cnj ?? '—'}
+              </MetaItem>
               <MetaItem label="Revisão humana">
                 {ferramenta.revisao_humana_obrigatoria ? 'Obrigatória' : 'Opcional'}
               </MetaItem>
@@ -163,6 +168,52 @@ export function ToolDetailPage(): ReactNode {
                   </MetaItem>
                 </div>
               </div>
+            )}
+          </Card>
+        )}
+
+        {active === 'governanca' && (
+          <Card title="Dossiê de Governança — GEX-IA / CIAR (CNJ 615/2025)">
+            <div className="gd-meta-grid" style={{ marginBottom: '1rem' }}>
+              <MetaItem label="Nº Dossiê">{ferramenta.codigo_institucional}</MetaItem>
+              <MetaItem label="Categoria de risco CNJ 615">
+                {ferramenta.categoria_risco_cnj ?? '—'}
+              </MetaItem>
+              <MetaItem label="Estágio">{ferramenta.estagio_gexia ?? '—'}</MetaItem>
+              <MetaItem label="Status da governança">{ferramenta.status_governanca ?? '—'}</MetaItem>
+              <MetaItem label="Fase de análise">{ferramenta.fase_gexia ?? '—'}</MetaItem>
+              <MetaItem label="Desenvolvimento">{ferramenta.desenvolvimento ?? '—'}</MetaItem>
+              <MetaItem label="Instituição parceira">{ferramenta.instituicao_parceira ?? '—'}</MetaItem>
+              <MetaItem label="Analista responsável">{ferramenta.analista_responsavel ?? '—'}</MetaItem>
+              <MetaItem label="Processo SEI">{ferramenta.processo_sei ?? '—'}</MetaItem>
+              <MetaItem label="Data da análise">{ferramenta.data_analise ?? '—'}</MetaItem>
+            </div>
+            {ferramenta.riscos_identificados && ferramenta.riscos_identificados.length > 0 && (
+              <div style={{ marginBottom: '1rem' }}>
+                <h3>Riscos identificados</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {ferramenta.riscos_identificados.map((r) => (
+                    <Badge key={r} tone="warning">{r}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            <MetaItem label="Interfaces institucionais acionadas">
+              {ferramenta.interfaces_institucionais ?? '—'}
+            </MetaItem>
+            <div style={{ marginTop: '1rem' }}>
+              <MetaItem label="Documento de origem">{ferramenta.documento_origem ?? '—'}</MetaItem>
+            </div>
+            <div style={{ marginTop: '1rem' }}>
+              <MetaItem label="Observações">{ferramenta.observacoes ?? '—'}</MetaItem>
+            </div>
+            <div style={{ marginTop: '1rem' }}>
+              <MetaItem label="Próximos passos">{ferramenta.proximos_passos ?? '—'}</MetaItem>
+            </div>
+            {ferramenta.origem_registro && (
+              <p style={{ marginTop: '1rem', fontSize: '0.85rem', opacity: 0.7 }}>
+                Proveniência do registro: {ferramenta.origem_registro}
+              </p>
             )}
           </Card>
         )}

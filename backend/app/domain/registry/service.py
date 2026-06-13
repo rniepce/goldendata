@@ -29,14 +29,28 @@ def create_tool(conn: Any, body: schemas.ToolCreate, owner_sub: str) -> dict:
         """INSERT INTO tool (codigo_institucional, nome, tipo, descricao, unidade_responsavel,
                              owner_sub, categoria_risco, justificativa_risco, vedacoes_checklist,
                              grau_supervisao_humana, revisao_humana_obrigatoria,
-                             explicacao_linguagem_simples, sinapses_id, proxima_revisao_em)
-           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING *""",
+                             explicacao_linguagem_simples, sinapses_id, proxima_revisao_em,
+                             status_ciclo_vida,
+                             categoria_risco_cnj, processo_sei, estagio_gexia, fase_gexia,
+                             desenvolvimento, instituicao_parceira, interfaces_institucionais,
+                             riscos_identificados, proximos_passos, status_governanca,
+                             analista_responsavel, documento_origem, data_analise, observacoes,
+                             origem_registro)
+           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
+                   COALESCE(%s, 'rascunho'),
+                   %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING *""",
         (
             body.codigo_institucional, body.nome, body.tipo, body.descricao,
             body.unidade_responsavel, owner_sub, body.categoria_risco, body.justificativa_risco,
             Jsonb(body.vedacoes_checklist), body.grau_supervisao_humana,
             body.revisao_humana_obrigatoria, body.explicacao_linguagem_simples,
             body.sinapses_id, body.proxima_revisao_em,
+            body.status_ciclo_vida,
+            body.categoria_risco_cnj, body.processo_sei, body.estagio_gexia, body.fase_gexia,
+            body.desenvolvimento, body.instituicao_parceira, body.interfaces_institucionais,
+            Jsonb(body.riscos_identificados), body.proximos_passos, body.status_governanca,
+            body.analista_responsavel, body.documento_origem, body.data_analise, body.observacoes,
+            body.origem_registro,
         ),
     )
 

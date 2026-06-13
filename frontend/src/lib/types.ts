@@ -57,6 +57,22 @@ export interface Tool {
   sinapses_id?: string;
   proxima_revisao_em?: string; // date ISO
   status_ciclo_vida?: string;
+  // Dossiê de Governança GEX-IA (CNJ 615)
+  categoria_risco_cnj?: string;
+  processo_sei?: string;
+  estagio_gexia?: string;
+  fase_gexia?: string;
+  desenvolvimento?: string;
+  instituicao_parceira?: string;
+  interfaces_institucionais?: string;
+  riscos_identificados?: string[];
+  proximos_passos?: string;
+  status_governanca?: string;
+  analista_responsavel?: string;
+  documento_origem?: string;
+  data_analise?: string; // date ISO
+  observacoes?: string;
+  origem_registro?: string;
 }
 
 export interface ToolInput {
