@@ -11,17 +11,21 @@ COPY package.json package-lock.json* ./
 RUN npm ci || npm install
 
 # Variáveis VITE_* são embutidas em BUILD TIME pelo Vite — recebidas como build args.
-# VITE_AUTH_MODE: "none" (sem login — demonstração) | "oidc" (Keycloak).
+# VITE_AUTH_MODE: "none" (demo) | "oidc" (Keycloak) | "supabase" (Supabase Auth).
 ARG VITE_API_URL
 ARG VITE_AUTH_MODE=none
 ARG VITE_OIDC_AUTHORITY
 ARG VITE_OIDC_CLIENT_ID
 ARG VITE_OIDC_REDIRECT_URI
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
 ENV VITE_API_URL=$VITE_API_URL \
     VITE_AUTH_MODE=$VITE_AUTH_MODE \
     VITE_OIDC_AUTHORITY=$VITE_OIDC_AUTHORITY \
     VITE_OIDC_CLIENT_ID=$VITE_OIDC_CLIENT_ID \
-    VITE_OIDC_REDIRECT_URI=$VITE_OIDC_REDIRECT_URI
+    VITE_OIDC_REDIRECT_URI=$VITE_OIDC_REDIRECT_URI \
+    VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
+    VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 
 # Copia o código e compila os estáticos.
 COPY . .
