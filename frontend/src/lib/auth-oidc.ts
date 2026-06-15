@@ -26,6 +26,7 @@ import {
   type ReactNode,
 } from 'react';
 import { env } from './env';
+import { getSupabase, userFromSession } from './supabase';
 import type { Role, UserInfo } from './types';
 
 const KNOWN_ROLES: Role[] = [
@@ -82,6 +83,10 @@ export async function getAccessToken(): Promise<string | null> {
   if (env.authMode === 'none') {
     return null;
   }
+  if (env.authMode === 'supabase') {
+    const { data } = await getSupabase().auth.getSession();
+    return data.session?.access_token ?? null;
+  }
   if (currentUser && !currentUser.expired) {
     return currentUser.access_token;
   }
@@ -103,6 +108,8 @@ export interface AuthState {
   user: UserInfo | null;
   error: string | null;
   login: () => Promise<void>;
+  /** Login e-mail+senha (modo 'supabase'). Lança erro com mensagem em pt-BR. */
+  loginPassword: (email: string, senha: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -130,6 +137,26 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactNode {
   useEffect(() => {
     if (env.authMode === 'none') {
       return; // sem fluxo de login: o usuário demo já está aplicado.
+    }
+    if (env.authMode === 'supabase') {
+      let active = true;
+      const sb = getSupabase();
+      sb.auth
+        .getSession()
+        .then(({ data }) => {
+          if (active) {
+            setUser(userFromSession(data.session));
+            setIsLoading(false);
+          }
+        })
+        .catch(() => active && setIsLoading(false));
+      const { data: sub } = sb.auth.onAuthStateChange((_event, session) => {
+        if (active) setUser(userFromSession(session));
+      });
+      return () => {
+        active = false;
+        sub.subscription.unsubscribe();
+      };
     }
     let active = true;
     const um = getUserManager();
@@ -165,15 +192,34 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactNode {
   }, [applyUser]);
 
   const login = useCallback(async () => {
-    if (env.authMode === 'none') {
-      return;
+    if (env.authMode === 'none' || env.authMode === 'supabase') {
+      return; // 'supabase' usa loginPassword (form e-mail+senha)
     }
     setError(null);
     await getUserManager().signinRedirect();
   }, []);
 
+  const loginPassword = useCallback(async (email: string, senha: string) => {
+    setError(null);
+    const { error: err } = await getSupabase().auth.signInWithPassword({
+      email,
+      password: senha,
+    });
+    if (err) {
+      const msg = /invalid login/i.test(err.message)
+        ? 'E-mail ou senha inválidos.'
+        : err.message;
+      setError(msg);
+      throw new Error(msg);
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     if (env.authMode === 'none') {
+      return;
+    }
+    if (env.authMode === 'supabase') {
+      await getSupabase().auth.signOut();
       return;
     }
     await getUserManager().signoutRedirect();
@@ -186,9 +232,10 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactNode {
       user,
       error,
       login,
+      loginPassword,
       logout,
     }),
-    [isLoading, user, error, login, logout],
+    [isLoading, user, error, login, loginPassword, logout],
   );
 
   return createElement(AuthContext.Provider, { value }, children);

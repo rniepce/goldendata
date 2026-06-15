@@ -53,7 +53,7 @@ def _decode(token: str) -> dict:
         return jwt.decode(
             token,
             signing_key,
-            algorithms=["RS256"],
+            algorithms=["RS256", "ES256"],  # RS256 (Keycloak) / ES256 (Supabase)
             audience=settings.oidc_audience,
             issuer=settings.oidc_issuer,
             options={"require": ["exp", "iat", "sub"]},
@@ -91,6 +91,19 @@ def get_current_user(request: Request) -> CurrentUser:
             nome=claims.get("name") or claims["sub"],
             email=claims.get("email"),
             roles=list(claims.get("roles") or []),
+        )
+
+    # Modo SUPABASE: JWT (ES256) validado via JWKS do Supabase; papéis RBAC em
+    # app_metadata.roles (definidos no provisionamento do usuário). aud="authenticated".
+    if settings.auth_mode == "supabase":
+        claims = _decode(token)
+        app_meta = claims.get("app_metadata") or {}
+        user_meta = claims.get("user_metadata") or {}
+        return CurrentUser(
+            sub=claims["sub"],
+            nome=user_meta.get("nome") or user_meta.get("name") or claims.get("email") or claims["sub"],
+            email=claims.get("email"),
+            roles=list(app_meta.get("roles") or []),
         )
 
     # Modo OIDC (Keycloak): roles em realm_access.roles.
