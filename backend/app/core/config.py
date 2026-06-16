@@ -29,6 +29,12 @@ class Settings(BaseSettings):
     auth_secret: str = ""
     auth_token_ttl_hours: int = 8
 
+    # Supabase Admin — gestão de usuários pela própria aplicação (área de Administração).
+    # A service_role key é SECRETA e fica somente no backend (bypassa RLS). Necessária
+    # para criar/listar/remover usuários via Admin API quando auth_mode=supabase.
+    supabase_url: str = ""
+    supabase_service_key: str = ""
+
     # Keycloak / OIDC (usados quando auth_mode=oidc)
     oidc_issuer: str = "http://localhost:8080/realms/tjmg"
     oidc_audience: str = "goldendata-api"

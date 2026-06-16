@@ -18,6 +18,23 @@ export interface UserInfo {
   roles: Role[];
 }
 
+/** Usuário do Supabase Auth (gestão de logins na área de Administração). */
+export interface SupabaseUser {
+  id: string;
+  email: string;
+  nome: string | null;
+  roles: Role[];
+  criado_em: string | null;
+  ultimo_acesso: string | null;
+}
+
+export interface SupabaseUserInput {
+  email: string;
+  nome: string;
+  senha: string;
+  roles: Role[];
+}
+
 // ---------- Registro (3.2) ----------
 export type Hospedagem = 'api_externa' | 'on_premise' | 'nuvem_homologada';
 

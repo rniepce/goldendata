@@ -18,6 +18,8 @@ import {
 } from '../../components/ui';
 import { ROLE_OPTIONS } from '../../lib/options';
 import type { Role, RoleAssignmentInput } from '../../lib/types';
+import { env } from '../../lib/env';
+import { UserManagement } from './UserManagement';
 
 export function AdminPage(): ReactNode {
   const { user } = useAuth();
@@ -52,9 +54,15 @@ export function AdminPage(): ReactNode {
   return (
     <>
       <PageHeader
-        title="Administração de papéis"
-        description="Atribua papéis a usuários (RBAC) e registre delegações de autorização com vigência definida."
+        title="Administração"
+        description="Gestão de usuários (logins) e atribuição de papéis (RBAC)."
       />
+
+      {env.authMode === 'supabase' && (
+        <div style={{ marginBottom: 'var(--gd-space-5)' }}>
+          <UserManagement />
+        </div>
+      )}
 
       <InfoAlert>
         A atribuição direta concede o papel ao usuário. A delegação registra que outro titular

@@ -32,6 +32,8 @@ import type {
   PromptVersionInput,
   RoleAssignment,
   RoleAssignmentInput,
+  SupabaseUser,
+  SupabaseUserInput,
   Rubric,
   RubricInput,
   Tool,
@@ -211,4 +213,11 @@ export const api = {
     request('/governance/audit-log/verify'),
   createRoleAssignment: (input: RoleAssignmentInput): Promise<RoleAssignment> =>
     request('/governance/role-assignments', { method: 'POST', body: input }),
+
+  // Gestão de usuários (Supabase Auth)
+  listUsers: (): Promise<SupabaseUser[]> => request('/governance/users'),
+  createUser: (input: SupabaseUserInput): Promise<SupabaseUser> =>
+    request('/governance/users', { method: 'POST', body: input }),
+  deleteUser: (id: string): Promise<void> =>
+    request(`/governance/users/${id}`, { method: 'DELETE' }),
 };

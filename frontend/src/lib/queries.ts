@@ -31,7 +31,28 @@ export const queryKeys = {
   auditLog: (entidade?: string, entidadeId?: string) =>
     ['auditLog', entidade ?? '', entidadeId ?? ''] as const,
   auditVerify: ['auditVerify'] as const,
+  users: ['users'] as const,
 };
+
+export function useUsers() {
+  return useQuery({ queryKey: queryKeys.users, queryFn: api.listUsers });
+}
+
+export function useCreateUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.createUser,
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.users }),
+  });
+}
+
+export function useDeleteUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteUser,
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.users }),
+  });
+}
 
 export function useMe() {
   return useQuery({ queryKey: queryKeys.me, queryFn: api.me });
