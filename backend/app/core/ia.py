@@ -22,7 +22,10 @@ def chamar(system: str, user: str, max_tokens: int | None = None) -> str:
     r = httpx.post(
         f"{settings.ai_base_url.rstrip('/')}/chat/completions",
         headers={
+            # Bearer cobre o endpoint OpenAI-compatível; api-key cobre o esquema
+            # tradicional do Azure. Enviar ambos evita uma ida-e-volta de descoberta.
             "Authorization": f"Bearer {settings.ai_api_key}",
+            "api-key": settings.ai_api_key,
             "Content-Type": "application/json",
         },
         json={
