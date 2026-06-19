@@ -72,7 +72,7 @@ def add_comentario(
     execute(
         ctx.conn,
         "SELECT audit_append(%s, 'create', 'comentario', %s, %s)",
-        (ctx.user.sub, c["id"], Jsonb({"iniciativa_id": iniciativa_id})),
+        (ctx.user.sub, str(c["id"]), Jsonb({"iniciativa_id": iniciativa_id})),
     )
     return c
 
