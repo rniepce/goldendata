@@ -46,11 +46,12 @@ class Settings(BaseSettings):
     hsts_max_age: int = 31536000  # 1 ano (CESEC §4.2)
 
     # IA assistiva (resumos e Q&A no portal). Opcional: só funciona com chave.
-    # A chave (Anthropic) é SECRETA e fica só no backend. Sem ela, os recursos de
-    # IA respondem 503 com instrução — o resto da plataforma funciona normalmente.
+    # API compatível com OpenAI (Azure AI Foundry / DeepSeek). A chave é SECRETA e
+    # fica só no backend; sem ela, os recursos de IA respondem 503 com instrução.
     ai_api_key: str = ""
-    ai_model: str = "claude-sonnet-4-6"
-    ai_base_url: str = "https://api.anthropic.com"
+    ai_model: str = "DeepSeek-V4-Pro"
+    ai_base_url: str = "https://assistente-web-resource.services.ai.azure.com/openai/v1"
+    ai_max_tokens: int = 1200
 
     # MCP (Model Context Protocol) — servidor que permite a IAs operar a plataforma.
     mcp_enabled: bool = True
