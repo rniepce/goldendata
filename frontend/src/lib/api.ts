@@ -40,6 +40,7 @@ import type {
   SupabaseUserInput,
   Rubric,
   RubricInput,
+  SearchResult,
   Tool,
   ToolFicha,
   ToolInput,
@@ -217,6 +218,14 @@ export const api = {
     request('/governance/audit-log/verify'),
   createRoleAssignment: (input: RoleAssignmentInput): Promise<RoleAssignment> =>
     request('/governance/role-assignments', { method: 'POST', body: input }),
+
+  // Assistente (busca global + IA)
+  busca: (q: string): Promise<SearchResult> => request('/busca', { query: { q } }),
+  iaDisponivel: (): Promise<{ disponivel: boolean }> => request('/ia/disponivel'),
+  resumirFerramenta: (toolId: string): Promise<{ resumo: string }> =>
+    request(`/ia/resumir-ferramenta/${toolId}`, { method: 'POST' }),
+  perguntarIA: (pergunta: string): Promise<{ resposta: string }> =>
+    request('/ia/perguntar', { method: 'POST', body: { pergunta } }),
 
   // Iniciativas do GEX-IA (Painel)
   listIniciativas: (params?: {

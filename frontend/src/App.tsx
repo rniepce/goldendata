@@ -9,6 +9,7 @@ import { Layout } from './components/Layout';
 import { RequireAuth } from './components/RequireAuth';
 import { CallbackScreen } from './features/auth/CallbackScreen';
 import { PainelPage } from './features/painel/PainelPage';
+import { BuscaPage } from './features/busca/BuscaPage';
 import { CatalogPage } from './features/catalog/CatalogPage';
 import { ToolDetailPage } from './features/toolDetail/ToolDetailPage';
 import { ToolVersionsPage } from './features/toolVersions/ToolVersionsPage';
@@ -33,6 +34,7 @@ export function App(): ReactNode {
       >
         <Route index element={<Navigate to="/painel" replace />} />
         <Route path="/painel" element={<PainelPage />} />
+        <Route path="/busca" element={<BuscaPage />} />
         <Route path="/catalogo" element={<CatalogPage />} />
         <Route path="/ferramentas/:id" element={<ToolDetailPage />} />
         <Route path="/ferramentas/:id/versoes" element={<ToolVersionsPage />} />

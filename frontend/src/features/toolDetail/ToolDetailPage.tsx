@@ -6,8 +6,10 @@
 
 import { useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 import { useAuth, hasAnyRole } from '../../lib/auth-oidc';
 import { useToolFicha } from '../../lib/queries';
+import { api } from '../../lib/api';
 import {
   Badge,
   Card,
@@ -58,6 +60,7 @@ export function ToolDetailPage(): ReactNode {
   const [active, setActive] = useState<SectionId>('identificacao');
 
   const podeEditar = hasAnyRole(user, 'owner_ferramenta', 'coordenador_comite', 'admin');
+  const resumoIa = useMutation({ mutationFn: () => api.resumirFerramenta(id ?? '') });
 
   if (isLoading) return <Loading label="Carregando ficha técnica…" />;
   if (isError) return <ErrorAlert error={error} />;
@@ -81,7 +84,44 @@ export function ToolDetailPage(): ReactNode {
         }
       />
 
-      <div className="gd-tabs" role="tablist" aria-label="Seções da ficha técnica">
+      <Card title="Parecer executivo (IA)">
+        {!resumoIa.data && (
+          <button
+            type="button"
+            className="gd-btn gd-btn--secondary gd-btn--sm"
+            disabled={resumoIa.isPending}
+            onClick={() => resumoIa.mutate()}
+          >
+            {resumoIa.isPending ? 'Gerando…' : '✨ Gerar parecer executivo (IA)'}
+          </button>
+        )}
+        {resumoIa.isError && (
+          <div style={{ marginTop: '0.5rem' }}>
+            <ErrorAlert error={resumoIa.error} />
+            <p style={{ fontSize: '0.85rem', color: 'var(--gd-color-text-muted)' }}>
+              Se a IA não estiver configurada, defina GOLDENDATA_AI_API_KEY no backend.
+            </p>
+          </div>
+        )}
+        {resumoIa.data && (
+          <>
+            <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.55, marginTop: 0 }}>{resumoIa.data.resumo}</p>
+            <button
+              type="button"
+              className="gd-btn gd-btn--secondary gd-btn--sm"
+              disabled={resumoIa.isPending}
+              onClick={() => resumoIa.mutate()}
+            >
+              Regenerar
+            </button>
+            <p style={{ fontSize: '0.78rem', color: 'var(--gd-color-text-muted)', marginBottom: 0 }}>
+              Texto gerado por IA como apoio — a decisão e a validação permanecem humanas.
+            </p>
+          </>
+        )}
+      </Card>
+
+      <div className="gd-tabs" role="tablist" aria-label="Seções da ficha técnica" style={{ marginTop: 'var(--gd-space-4)' }}>
         {SECTIONS.map((section) => (
           <button
             key={section.id}

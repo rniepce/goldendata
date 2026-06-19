@@ -100,6 +100,19 @@ export interface ComentarioInput {
   anexo_titulo?: string | null;
 }
 
+export interface SearchHit {
+  tipo: string;
+  id: string;
+  titulo: string;
+  subtitulo: string;
+  link: string;
+}
+
+export interface SearchResult {
+  termo: string;
+  resultados: SearchHit[];
+}
+
 // ---------- Registro (3.2) ----------
 export type Hospedagem = 'api_externa' | 'on_premise' | 'nuvem_homologada';
 
