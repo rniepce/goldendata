@@ -82,6 +82,24 @@ export interface IniciativaInput {
   prazo?: string | null;
 }
 
+export interface Comentario {
+  id: string;
+  iniciativa_id: string;
+  autor_sub: string;
+  autor_nome: string | null;
+  texto: string;
+  anexo_url: string | null;
+  anexo_titulo: string | null;
+  resolvido: boolean;
+  criado_em: string;
+}
+
+export interface ComentarioInput {
+  texto: string;
+  anexo_url?: string | null;
+  anexo_titulo?: string | null;
+}
+
 // ---------- Registro (3.2) ----------
 export type Hospedagem = 'api_externa' | 'on_premise' | 'nuvem_homologada';
 

@@ -11,6 +11,7 @@ import type {
   EvalOutputInput,
   GateInput,
   GateDecisionInput,
+  ComentarioInput,
   GoldenCaseInput,
   GoldenDatasetInput,
   IniciativaInput,
@@ -35,7 +36,40 @@ export const queryKeys = {
   users: ['users'] as const,
   iniciativas: ['iniciativas'] as const,
   iniciativa: (id: string) => ['iniciativa', id] as const,
+  comentarios: (id: string) => ['comentarios', id] as const,
 };
+
+export function useComentarios(iniciativaId: string) {
+  return useQuery({
+    queryKey: queryKeys.comentarios(iniciativaId),
+    queryFn: () => api.listComentarios(iniciativaId),
+  });
+}
+
+export function useAddComentario(iniciativaId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: ComentarioInput) => api.addComentario(iniciativaId, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.comentarios(iniciativaId) }),
+  });
+}
+
+export function useResolverComentario(iniciativaId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, resolvido }: { id: string; resolvido: boolean }) =>
+      api.resolverComentario(id, resolvido),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.comentarios(iniciativaId) }),
+  });
+}
+
+export function useDeleteComentario(iniciativaId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.deleteComentario(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.comentarios(iniciativaId) }),
+  });
+}
 
 export function useIniciativas() {
   return useQuery({ queryKey: queryKeys.iniciativas, queryFn: () => api.listIniciativas() });

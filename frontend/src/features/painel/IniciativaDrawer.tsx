@@ -18,6 +18,7 @@ import type {
   IniciativaStatus,
 } from '../../lib/types';
 import { CategoriaBadge } from './IniciativaCard';
+import { IniciativaComentarios } from './IniciativaComentarios';
 
 const RESP_OPTIONS = [
   { value: '', label: 'Sem responsável' },
@@ -140,6 +141,8 @@ export function IniciativaDrawer({
             </div>
           </>
         )}
+
+        <IniciativaComentarios iniciativaId={item.id} />
       </aside>
     </div>
   );

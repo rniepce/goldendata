@@ -25,6 +25,8 @@ import type {
   GoldenCaseInput,
   GoldenDataset,
   GoldenDatasetInput,
+  Comentario,
+  ComentarioInput,
   Iniciativa,
   IniciativaInput,
   KpiQuality,
@@ -229,6 +231,14 @@ export const api = {
     request(`/iniciativas/${id}`, { method: 'PATCH', body: input }),
   deleteIniciativa: (id: string): Promise<void> =>
     request(`/iniciativas/${id}`, { method: 'DELETE' }),
+  listComentarios: (iniciativaId: string): Promise<Comentario[]> =>
+    request(`/iniciativas/${iniciativaId}/comentarios`),
+  addComentario: (iniciativaId: string, input: ComentarioInput): Promise<Comentario> =>
+    request(`/iniciativas/${iniciativaId}/comentarios`, { method: 'POST', body: input }),
+  resolverComentario: (comentarioId: string, resolvido: boolean): Promise<Comentario> =>
+    request(`/iniciativas/comentarios/${comentarioId}`, { method: 'PATCH', body: { resolvido } }),
+  deleteComentario: (comentarioId: string): Promise<void> =>
+    request(`/iniciativas/comentarios/${comentarioId}`, { method: 'DELETE' }),
 
   // Gestão de usuários (Supabase Auth)
   listUsers: (): Promise<SupabaseUser[]> => request('/governance/users'),

@@ -27,6 +27,16 @@ class IniciativaCreate(BaseModel):
     prazo: date | None = None
 
 
+class ComentarioCreate(BaseModel):
+    texto: str = Field(min_length=1)
+    anexo_url: str | None = None
+    anexo_titulo: str | None = None
+
+
+class ComentarioUpdate(BaseModel):
+    resolvido: bool
+
+
 class IniciativaUpdate(BaseModel):
     titulo: str | None = None
     resumo: str | None = None

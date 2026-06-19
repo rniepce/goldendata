@@ -71,3 +71,40 @@ def update_iniciativa(conn: Any, iniciativa_id: str, body: schemas.IniciativaUpd
 def delete_iniciativa(conn: Any, iniciativa_id: str) -> bool:
     row = execute(conn, "DELETE FROM iniciativa WHERE id = %s RETURNING id", (iniciativa_id,))
     return row is not None
+
+
+# ---------------- Comentários / anexos-link ----------------
+def list_comentarios(conn: Any, iniciativa_id: str) -> list[dict]:
+    return fetch_all(
+        conn,
+        "SELECT * FROM comentario WHERE iniciativa_id = %s ORDER BY criado_em",
+        (iniciativa_id,),
+    )
+
+
+def create_comentario(
+    conn: Any, iniciativa_id: str, body: schemas.ComentarioCreate, autor_sub: str, autor_nome: str
+) -> dict:
+    return execute(
+        conn,
+        """INSERT INTO comentario (iniciativa_id, autor_sub, autor_nome, texto, anexo_url, anexo_titulo)
+           VALUES (%s,%s,%s,%s,%s,%s) RETURNING *""",
+        (iniciativa_id, autor_sub, autor_nome, body.texto, body.anexo_url, body.anexo_titulo),
+    )
+
+
+def set_resolvido(conn: Any, comentario_id: str, resolvido: bool) -> dict | None:
+    return execute(
+        conn,
+        "UPDATE comentario SET resolvido = %s WHERE id = %s RETURNING *",
+        (resolvido, comentario_id),
+    )
+
+
+def get_comentario(conn: Any, comentario_id: str) -> dict | None:
+    return fetch_one(conn, "SELECT * FROM comentario WHERE id = %s", (comentario_id,))
+
+
+def delete_comentario(conn: Any, comentario_id: str) -> bool:
+    row = execute(conn, "DELETE FROM comentario WHERE id = %s RETURNING id", (comentario_id,))
+    return row is not None
