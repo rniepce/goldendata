@@ -300,3 +300,51 @@ export function MetaItem({ label, children }: { label: string; children: ReactNo
     </div>
   );
 }
+
+/* Trechos em **negrito** dentro de uma linha (sem HTML inseguro). */
+function mdInline(s: string): ReactNode[] {
+  return s.split(/(\*\*[^*]+\*\*)/g).map((part, i) => {
+    const bold = part.match(/^\*\*([^*]+)\*\*$/);
+    return bold ? <strong key={i}>{bold[1]}</strong> : <span key={i}>{part}</span>;
+  });
+}
+
+/**
+ * Renderizador leve de markdown para a saída da IA (parecer, Q&A): cobre
+ * **negrito**, listas com "- " e parágrafos. Não usa dangerouslySetInnerHTML.
+ */
+export function Markdown({ text }: { text: string }): ReactNode {
+  const blocks: ReactNode[] = [];
+  let bullets: string[] = [];
+  let key = 0;
+  const flush = (): void => {
+    if (bullets.length) {
+      const items = bullets;
+      blocks.push(
+        <ul key={`l${key++}`} className="gd-md-list">
+          {items.map((b, i) => (
+            <li key={i}>{mdInline(b)}</li>
+          ))}
+        </ul>,
+      );
+      bullets = [];
+    }
+  };
+  for (const raw of text.split('\n')) {
+    const line = raw.trimEnd();
+    const li = line.match(/^\s*[-*]\s+(.*)$/);
+    if (li) {
+      bullets.push(li[1]);
+      continue;
+    }
+    flush();
+    if (line.trim() === '') continue;
+    blocks.push(
+      <p key={`p${key++}`} className="gd-md-p">
+        {mdInline(line)}
+      </p>,
+    );
+  }
+  flush();
+  return <div className="gd-md">{blocks}</div>;
+}

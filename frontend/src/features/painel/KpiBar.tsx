@@ -16,19 +16,19 @@ export function KpiBar({ itens }: { itens: Iniciativa[] }): ReactNode {
   const concluidas = itens.filter((i) => i.status === 'concluido').length;
   const atrasadas = itens.filter(atrasada).length;
 
-  const cards: { num: number; label: string; cor: string }[] = [
-    { num: total, label: 'Iniciativas', cor: '#2563eb' },
-    { num: emAndamento, label: 'Em andamento', cor: '#0891b2' },
-    { num: aFazer, label: 'A fazer', cor: '#6b7280' },
-    { num: concluidas, label: 'Concluídas', cor: '#16a34a' },
-    { num: atrasadas, label: 'Atrasadas', cor: '#dc2626' },
+  const cards: { num: number; label: string; cor: string; alerta?: boolean }[] = [
+    { num: total, label: 'Iniciativas', cor: 'var(--gd-color-kpi-total)' },
+    { num: emAndamento, label: 'Em andamento', cor: 'var(--gd-color-kpi-andamento)' },
+    { num: aFazer, label: 'A fazer', cor: 'var(--gd-color-kpi-afazer)' },
+    { num: concluidas, label: 'Concluídas', cor: 'var(--gd-color-kpi-concluido)' },
+    { num: atrasadas, label: 'Atrasadas', cor: 'var(--gd-color-kpi-atrasado)', alerta: true },
   ];
 
   return (
     <div className="painel-kpis">
       {cards.map((c) => (
         <div key={c.label} className="painel-kpi" style={{ '--kpi-cor': c.cor } as React.CSSProperties}>
-          <div className="painel-kpi__num" style={{ color: c.num > 0 && c.label === 'Atrasadas' ? c.cor : undefined }}>
+          <div className="painel-kpi__num" style={{ color: c.alerta && c.num > 0 ? c.cor : undefined }}>
             {c.num}
           </div>
           <div className="painel-kpi__label">{c.label}</div>

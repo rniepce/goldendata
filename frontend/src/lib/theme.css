@@ -59,6 +59,18 @@
 
   --gd-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
   --gd-shadow: 0 2px 8px rgba(16, 24, 40, 0.08);
+  --gd-shadow-lg: 0 6px 18px rgba(16, 24, 40, 0.1);
+  --gd-shadow-xl: -8px 0 24px rgba(16, 24, 40, 0.15);
+
+  /* Superfície sutil (colunas de kanban, células fora do mês, blocos de leitura) */
+  --gd-color-bg-subtle: #eef1f6;
+
+  /* Cores da faixa de KPIs / status de iniciativas (antes hardcoded em KpiBar) */
+  --gd-color-kpi-total: #14387f;
+  --gd-color-kpi-andamento: #0e7490;
+  --gd-color-kpi-afazer: #52607a;
+  --gd-color-kpi-concluido: #1d6b3b;
+  --gd-color-kpi-atrasado: #a31621;
 
   --gd-sidebar-width: 248px;
   --gd-header-height: 60px;
@@ -257,6 +269,50 @@ p { margin: 0 0 var(--gd-space-3); }
 .gd-btn--danger { background: var(--gd-color-danger); }
 .gd-btn--danger:hover:not(:disabled) { background: #821018; }
 .gd-btn--sm { padding: var(--gd-space-1) var(--gd-space-3); font-size: var(--gd-font-size-xs); }
+/* Botão textual (ações inline como Resolver/Excluir) — alvo de toque adequado */
+.gd-btn--text {
+  background: none;
+  border: 0;
+  color: var(--gd-color-primary);
+  font-weight: 600;
+  font-size: var(--gd-font-size-xs);
+  padding: var(--gd-space-1) var(--gd-space-2);
+  min-height: 32px;
+  border-radius: var(--gd-radius-sm);
+}
+.gd-btn--text:hover:not(:disabled) { background: var(--gd-color-primary-soft); }
+.gd-btn--text.gd-btn--muted { color: var(--gd-color-text-muted); }
+.gd-btn--text.gd-btn--muted:hover:not(:disabled) { background: var(--gd-color-surface-alt); }
+.gd-btn--text.gd-btn--text-danger { color: var(--gd-color-danger); }
+.gd-btn--text.gd-btn--text-danger:hover:not(:disabled) { background: var(--gd-color-danger-soft); }
+
+/* Botão de menu (hambúrguer) — só aparece quando a sidebar vira off-canvas */
+.gd-hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  font-size: 1.25rem;
+  background: none;
+  border: 1px solid var(--gd-color-border-strong);
+  border-radius: var(--gd-radius);
+  cursor: pointer;
+  color: var(--gd-color-text);
+}
+.gd-sidebar-backdrop { display: none; }
+
+/* Renderização leve de markdown (parecer da IA, respostas do assistente) */
+.gd-md > :first-child { margin-top: 0; }
+.gd-md > :last-child { margin-bottom: 0; }
+.gd-md-p { margin: 0 0 var(--gd-space-3); line-height: 1.55; }
+.gd-md-list { margin: 0 0 var(--gd-space-3); padding-left: var(--gd-space-5); }
+.gd-md-list li { margin-bottom: var(--gd-space-1); }
+.gd-md--panel {
+  background: var(--gd-color-bg-subtle);
+  padding: var(--gd-space-4);
+  border-radius: var(--gd-radius-lg);
+}
 
 .gd-field {
   display: flex;
@@ -481,6 +537,37 @@ p { margin: 0 0 var(--gd-space-3); }
 
 @media (max-width: 880px) {
   .gd-app { grid-template-columns: 1fr; grid-template-areas: 'header' 'main'; }
-  .gd-sidebar { display: none; }
+  .gd-main { padding: var(--gd-space-4); }
+  .gd-page-header { flex-direction: column; }
   .gd-form-grid { grid-template-columns: 1fr; }
+  .gd-hamburger { display: inline-flex; }
+
+  /* Sidebar vira gaveta off-canvas; antes simplesmente sumia (sem navegação). */
+  .gd-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(264px, 82vw);
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    z-index: 60;
+  }
+  .gd-sidebar--open {
+    transform: translateX(0);
+    box-shadow: var(--gd-shadow-xl);
+  }
+  .gd-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: rgba(0, 0, 0, 0.4);
+    border: 0;
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gd-sidebar { transition: none; }
 }

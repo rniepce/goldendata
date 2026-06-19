@@ -125,7 +125,7 @@
   display: block;
 }
 .painel-card:hover {
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--gd-shadow-lg);
   transform: translateY(-1px);
 }
 .painel-card__titulo {
@@ -172,7 +172,7 @@
   height: 100%;
   overflow-y: auto;
   padding: var(--gd-space-4);
-  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--gd-shadow-xl);
 }
 .painel-drawer__close {
   border: 0; background: transparent; cursor: pointer;
@@ -206,7 +206,7 @@
   color: var(--gd-color-text-muted);
   margin-top: 0.5rem;
 }
-.painel-card__prazo--vencido { color: #dc2626; font-weight: 600; }
+.painel-card__prazo--vencido { color: var(--gd-color-danger); font-weight: 600; }
 
 /* Form de edição dentro do drawer */
 .painel-drawer .gd-form-grid { gap: var(--gd-space-2); }
@@ -234,6 +234,7 @@
   margin-bottom: var(--gd-space-3);
 }
 .painel-cal__head h3 { margin: 0; text-transform: capitalize; min-width: 11rem; }
+.painel-cal__wrap { overflow-x: auto; }
 .painel-cal__grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -259,4 +260,21 @@
   font-size: 0.68rem; line-height: 1.2;
   border-radius: 4px; padding: 0.12rem 0.3rem; margin-top: 0.15rem;
   color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ---------- Responsivo (tablet/celular) ---------- */
+@media (max-width: 768px) {
+  .painel-kpis { grid-template-columns: repeat(2, 1fr); }
+  .painel-grid { grid-template-columns: 1fr; }
+  .painel-toggle { width: 100%; }
+  .painel-toggle button { flex: 1; }
+  .painel-responsaveis { max-height: 132px; overflow-y: auto; }
+  /* Calendário rola na horizontal em vez de esmagar as 7 colunas */
+  .painel-cal__grid { min-width: 520px; }
+  .painel-cal__cel { min-height: 72px; }
+  .painel-drawer { width: 100%; padding: var(--gd-space-4) var(--gd-space-3); }
+}
+@media (max-width: 480px) {
+  .painel-cal__head { flex-wrap: wrap; }
+  .painel-cal__head h3 { min-width: 0; }
 }

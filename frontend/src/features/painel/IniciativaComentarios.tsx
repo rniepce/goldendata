@@ -85,19 +85,19 @@ export function IniciativaComentarios({ iniciativaId }: { iniciativaId: string }
                 📎 {c.anexo_titulo || c.anexo_url}
               </a>
             )}
-            <div style={{ display: 'flex', gap: '0.8rem', marginTop: '0.25rem' }}>
+            <div style={{ display: 'flex', gap: 'var(--gd-space-2)', marginTop: 'var(--gd-space-1)' }}>
               <button
                 type="button"
+                className="gd-btn gd-btn--text"
                 onClick={() => resolver.mutate({ id: c.id, resolvido: !c.resolvido })}
-                style={{ border: 0, background: 'none', cursor: 'pointer', color: 'var(--gd-color-primary)', fontSize: '0.78rem', padding: 0 }}
               >
                 {c.resolvido ? 'Reabrir' : 'Resolver'}
               </button>
               {(c.autor_sub === user?.sub || podeModerar) && (
                 <button
                   type="button"
+                  className="gd-btn gd-btn--text gd-btn--muted"
                   onClick={() => remove.mutate(c.id)}
-                  style={{ border: 0, background: 'none', cursor: 'pointer', color: 'var(--gd-color-text-muted)', fontSize: '0.78rem', padding: 0 }}
                 >
                   Excluir
                 </button>
@@ -113,14 +113,15 @@ export function IniciativaComentarios({ iniciativaId }: { iniciativaId: string }
           className="gd-textarea"
           rows={2}
           placeholder="Escreva um comentário…"
+          aria-label="Conteúdo do comentário"
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           style={{ width: '100%' }}
         />
         {anexoOpen && (
           <div className="gd-form-grid" style={{ marginTop: '0.4rem' }}>
-            <input className="gd-input" placeholder="Link (URL do SEI/documento)" value={anexoUrl} onChange={(e) => setAnexoUrl(e.target.value)} />
-            <input className="gd-input" placeholder="Título do anexo" value={anexoTitulo} onChange={(e) => setAnexoTitulo(e.target.value)} />
+            <input className="gd-input" aria-label="URL do anexo (link do SEI ou documento)" placeholder="Link (URL do SEI/documento)" value={anexoUrl} onChange={(e) => setAnexoUrl(e.target.value)} />
+            <input className="gd-input" aria-label="Título do anexo" placeholder="Título do anexo" value={anexoTitulo} onChange={(e) => setAnexoTitulo(e.target.value)} />
           </div>
         )}
         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem', alignItems: 'center' }}>

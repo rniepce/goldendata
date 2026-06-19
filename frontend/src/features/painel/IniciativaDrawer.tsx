@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge, ErrorAlert, MetaItem, SelectField, SuccessAlert, TextAreaField, TextField } from '../../components/ui';
 import {
@@ -47,6 +47,15 @@ export function IniciativaDrawer({
   const [sei, setSei] = useState(item.processo_sei ?? '');
   const [salvo, setSalvo] = useState(false);
 
+  // Fecha o drawer com Escape (acessibilidade — navegação por teclado).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   function salvar(): void {
     setSalvo(false);
     const nome = MEMBROS_GEXIA.find((m) => m.email === respEmail)?.nome ?? null;
@@ -70,10 +79,10 @@ export function IniciativaDrawer({
   }
 
   return (
-    <div className="painel-drawer__overlay" onClick={onClose}>
-      <aside className="painel-drawer" onClick={(e) => e.stopPropagation()} aria-label="Detalhes da iniciativa">
+    <div className="painel-drawer__overlay" role="presentation" onClick={onClose}>
+      <aside className="painel-drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Detalhes da iniciativa">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '1rem' }}>
-          <h2 style={{ margin: 0, fontSize: '1.15rem' }}>{item.titulo}</h2>
+          <h2 style={{ margin: 0, fontSize: 'var(--gd-font-size-lg)' }}>{item.titulo}</h2>
           <button className="painel-drawer__close" onClick={onClose} aria-label="Fechar">
             ×
           </button>
@@ -116,7 +125,7 @@ export function IniciativaDrawer({
               <button
                 type="button"
                 className="gd-btn gd-btn--secondary gd-btn--sm"
-                style={{ color: 'var(--gd-color-danger, #dc2626)' }}
+                style={{ color: 'var(--gd-color-danger)' }}
                 disabled={remove.isPending}
                 onClick={() => {
                   if (confirm(`Excluir a iniciativa "${item.titulo}"?`)) {

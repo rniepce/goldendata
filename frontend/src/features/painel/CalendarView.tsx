@@ -61,7 +61,7 @@ export function CalendarView({
         <button type="button" className="gd-btn gd-btn--secondary gd-btn--sm" onClick={() => navega(1)} aria-label="Próximo mês">
           ›
         </button>
-        <button type="button" className="gd-btn gd-btn--secondary gd-btn--sm" onClick={() => setCursor({ ano: hoje.getFullYear(), mes: hoje.getMonth() })}>
+        <button type="button" className="gd-btn gd-btn--secondary gd-btn--sm" onClick={() => setCursor({ ano: hoje.getFullYear(), mes: hoje.getMonth() })} aria-label="Voltar ao mês atual">
           Hoje
         </button>
         {semPrazo > 0 && (
@@ -71,7 +71,8 @@ export function CalendarView({
         )}
       </div>
 
-      <div className="painel-cal__grid" role="grid">
+      <div className="painel-cal__wrap">
+      <div className="painel-cal__grid" role="grid" aria-colcount={7} aria-label={`Calendário de ${titulo}`}>
         {DOW.map((d) => (
           <div key={d} className="painel-cal__dow">{d}</div>
         ))}
@@ -97,6 +98,7 @@ export function CalendarView({
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );

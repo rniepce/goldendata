@@ -21,6 +21,16 @@ router = APIRouter(tags=["assistente"])
 
 _READ = require_role("owner_ferramenta", "coordenador_comite", "avaliador", "auditor_dpo", "admin")
 
+# Aterramento da taxonomia de risco CNJ 615: evita que a IA leia "BR5" como nível
+# alto. AR = Alto Risco, BR = Baixo Risco. A classificação registrada é soberana.
+_CNJ_RISCO = (
+    "IMPORTANTE — taxonomia de risco da Resolução CNJ 615/2025: os códigos começam "
+    "com AR (Alto Risco) ou BR (Baixo Risco). Ex.: BR5 significa BAIXO risco; AR3 "
+    "significa ALTO risco. O número é apenas um identificador do item, NÃO um nível. "
+    "Use sempre a classificação de risco registrada e nunca reinterprete o código "
+    "como um nível diferente do que está escrito."
+)
+
 
 # ---------------- Busca global ----------------
 @router.get("/busca")
@@ -68,8 +78,9 @@ def resumir_ferramenta(tool_id: str, ctx: Ctx = Depends(get_ctx), _=Depends(_REA
     f = ficha["ferramenta"]
     contexto = (
         f"Nome: {f.get('nome')}\nCódigo: {f.get('codigo_institucional')}\n"
-        f"Unidade: {f.get('unidade_responsavel')}\nCategoria de risco (CNJ 615): "
-        f"{f.get('categoria_risco_cnj') or f.get('categoria_risco')}\n"
+        f"Unidade: {f.get('unidade_responsavel')}\n"
+        f"Classificação de risco registrada: {f.get('categoria_risco') or 'não informada'} "
+        f"(código CNJ 615: {f.get('categoria_risco_cnj') or '—'})\n"
         f"Estágio: {f.get('estagio_gexia')}\nDescrição: {f.get('descricao')}\n"
         f"Riscos: {f.get('riscos_identificados')}\nObservações: {f.get('observacoes')}\n"
         f"Versões: {len(ficha.get('tool_versions') or [])} · "
@@ -78,7 +89,7 @@ def resumir_ferramenta(tool_id: str, ctx: Ctx = Depends(get_ctx), _=Depends(_REA
     system = (
         "Você é um analista de governança de IA do TJMG. Resuma a ficha técnica em um "
         "parecer executivo curto (4-6 linhas), em português formal, destacando finalidade, "
-        "categoria de risco e pontos de atenção. Não invente dados ausentes."
+        "categoria de risco e pontos de atenção. Não invente dados ausentes. " + _CNJ_RISCO
     )
     try:
         resumo = ia.chamar(system, contexto, max_tokens=600)
@@ -98,8 +109,8 @@ class Pergunta(BaseModel):
 def perguntar(body: Pergunta, ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
     tools = fetch_all(
         ctx.conn,
-        """SELECT codigo_institucional, nome, unidade_responsavel, categoria_risco_cnj,
-                  estagio_gexia, descricao FROM tool ORDER BY codigo_institucional""",
+        """SELECT codigo_institucional, nome, unidade_responsavel, categoria_risco,
+                  categoria_risco_cnj, estagio_gexia, descricao FROM tool ORDER BY codigo_institucional""",
     )
     inics = fetch_all(
         ctx.conn,
@@ -107,7 +118,8 @@ def perguntar(body: Pergunta, ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
     )
     ctx_tools = "\n".join(
         f"- [{t['codigo_institucional']}] {t['nome']} · unidade {t['unidade_responsavel']} · "
-        f"risco {t.get('categoria_risco_cnj')} · estágio {t.get('estagio_gexia')} · {(t.get('descricao') or '')[:160]}"
+        f"risco {t.get('categoria_risco') or '—'} (CNJ {t.get('categoria_risco_cnj') or '—'}) · "
+        f"estágio {t.get('estagio_gexia')} · {(t.get('descricao') or '')[:160]}"
         for t in tools
     )
     ctx_inic = "\n".join(
@@ -119,7 +131,7 @@ def perguntar(body: Pergunta, ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
         "Você é o assistente do GEX-IA (governança de IA do TJMG). Responda à pergunta "
         "APENAS com base no contexto fornecido (catálogo de ferramentas e iniciativas). "
         "Se a resposta não estiver no contexto, diga que não há essa informação. Seja "
-        "conciso, em português, e cite os itens relevantes pelo nome/código."
+        "conciso, em português, e cite os itens relevantes pelo nome/código. " + _CNJ_RISCO
     )
     user = f"CONTEXTO — FERRAMENTAS:\n{ctx_tools}\n\nCONTEXTO — INICIATIVAS:\n{ctx_inic}\n\nPERGUNTA: {body.pergunta}"
     try:

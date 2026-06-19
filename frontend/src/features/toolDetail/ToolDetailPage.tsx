@@ -15,6 +15,7 @@ import {
   Card,
   ErrorAlert,
   Loading,
+  Markdown,
   MetaItem,
   PageHeader,
   RiskBadge,
@@ -85,36 +86,36 @@ export function ToolDetailPage(): ReactNode {
       />
 
       <Card title="Parecer executivo (IA)">
-        {!resumoIa.data && (
+        {!resumoIa.data && !resumoIa.isPending && (
           <button
             type="button"
             className="gd-btn gd-btn--secondary gd-btn--sm"
-            disabled={resumoIa.isPending}
+            aria-label="Gerar parecer executivo com IA"
             onClick={() => resumoIa.mutate()}
           >
-            {resumoIa.isPending ? 'Gerando…' : '✨ Gerar parecer executivo (IA)'}
+            ✨ Gerar parecer executivo (IA)
           </button>
         )}
+        {resumoIa.isPending && <Loading label="Gerando parecer… (pode levar até 30s)" />}
         {resumoIa.isError && (
-          <div style={{ marginTop: '0.5rem' }}>
+          <div style={{ marginTop: 'var(--gd-space-2)' }}>
             <ErrorAlert error={resumoIa.error} />
-            <p style={{ fontSize: '0.85rem', color: 'var(--gd-color-text-muted)' }}>
+            <p style={{ fontSize: 'var(--gd-font-size-sm)', color: 'var(--gd-color-text-muted)' }}>
               Se a IA não estiver configurada, defina GOLDENDATA_AI_API_KEY no backend.
             </p>
           </div>
         )}
-        {resumoIa.data && (
+        {resumoIa.data && !resumoIa.isPending && (
           <>
-            <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.55, marginTop: 0 }}>{resumoIa.data.resumo}</p>
+            <Markdown text={resumoIa.data.resumo} />
             <button
               type="button"
               className="gd-btn gd-btn--secondary gd-btn--sm"
-              disabled={resumoIa.isPending}
               onClick={() => resumoIa.mutate()}
             >
               Regenerar
             </button>
-            <p style={{ fontSize: '0.78rem', color: 'var(--gd-color-text-muted)', marginBottom: 0 }}>
+            <p style={{ fontSize: 'var(--gd-font-size-xs)', color: 'var(--gd-color-text-muted)', marginBottom: 0, marginTop: 'var(--gd-space-2)' }}>
               Texto gerado por IA como apoio — a decisão e a validação permanecem humanas.
             </p>
           </>

@@ -7,7 +7,7 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
-import { Badge, Card, ErrorAlert, PageHeader } from '../../components/ui';
+import { Badge, Card, ErrorAlert, Loading, Markdown, PageHeader } from '../../components/ui';
 
 export function BuscaPage(): ReactNode {
   const [q, setQ] = useState('');
@@ -37,6 +37,7 @@ export function BuscaPage(): ReactNode {
           className="gd-input"
           style={{ width: '100%', fontSize: '1rem' }}
           placeholder="Digite ao menos 2 caracteres (nome, código, unidade, responsável…)"
+          aria-label="Buscar no acervo"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           autoFocus
@@ -77,6 +78,7 @@ export function BuscaPage(): ReactNode {
                 className="gd-input"
                 style={{ flex: 1 }}
                 placeholder="Sua pergunta…"
+                aria-label="Pergunta para o assistente de IA"
                 value={pergunta}
                 onChange={(e) => setPergunta(e.target.value)}
               />
@@ -85,6 +87,7 @@ export function BuscaPage(): ReactNode {
               </button>
             </div>
           </form>
+          {qa.isPending && <Loading label="Consultando o assistente… (pode levar até 30s)" />}
           {qa.isError && (
             <div style={{ marginTop: '0.8rem' }}>
               <ErrorAlert error={qa.error} />
@@ -94,8 +97,8 @@ export function BuscaPage(): ReactNode {
             </div>
           )}
           {qa.data && (
-            <div style={{ marginTop: '1rem', whiteSpace: 'pre-wrap', lineHeight: 1.55, background: 'var(--gd-color-bg-subtle, #f3f4f6)', padding: '1rem', borderRadius: 8 }}>
-              {qa.data.resposta}
+            <div className="gd-md--panel" style={{ marginTop: 'var(--gd-space-4)' }}>
+              <Markdown text={qa.data.resposta} />
             </div>
           )}
         </Card>

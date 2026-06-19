@@ -47,6 +47,8 @@ export function IniciativaCard({
       <span
         className="painel-card__pri"
         style={{ background: pri.cor }}
+        role="img"
+        aria-label={`Prioridade ${pri.label.toLowerCase()}`}
         title={`Prioridade ${pri.label.toLowerCase()}`}
       />
       <h4 className="painel-card__titulo">{item.titulo}</h4>

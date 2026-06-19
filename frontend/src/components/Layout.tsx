@@ -3,7 +3,7 @@
  * do usuário e papéis, e indicador de ambiente (dev/homolog/prod).
  */
 
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth, hasAnyRole } from '../lib/auth-oidc';
 import { env } from '../lib/env';
@@ -45,6 +45,17 @@ const ENV_LABELS: Record<typeof env.ambiente, string> = {
 
 export function Layout(): ReactNode {
   const { user, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Fecha a gaveta de navegação (mobile) ao pressionar Escape.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
 
   const visibleItems = NAV_ITEMS.filter(
     (item) => !item.roles || hasAnyRole(user, ...item.roles),
@@ -58,6 +69,16 @@ export function Layout(): ReactNode {
 
       <header className="gd-header">
         <div className="gd-row">
+          <button
+            type="button"
+            className="gd-hamburger"
+            aria-label={menuOpen ? 'Fechar menu de navegação' : 'Abrir menu de navegação'}
+            aria-expanded={menuOpen}
+            aria-controls="gd-sidebar-nav"
+            onClick={() => setMenuOpen((v) => !v)}
+          >
+            ☰
+          </button>
           <span className={`gd-env-flag gd-env-flag--${env.ambiente}`} title="Ambiente atual">
             {ENV_LABELS[env.ambiente]}
           </span>
@@ -88,7 +109,20 @@ export function Layout(): ReactNode {
         </div>
       </header>
 
-      <nav className="gd-sidebar" aria-label="Navegação principal">
+      {menuOpen && (
+        <button
+          type="button"
+          className="gd-sidebar-backdrop"
+          aria-label="Fechar menu de navegação"
+          onClick={() => setMenuOpen(false)}
+        />
+      )}
+
+      <nav
+        id="gd-sidebar-nav"
+        className={`gd-sidebar${menuOpen ? ' gd-sidebar--open' : ''}`}
+        aria-label="Navegação principal"
+      >
         <div className="gd-sidebar__brand">
           goldendata
           <span className="gd-visually-hidden"> — plataforma de governança de IA do TJMG</span>
@@ -96,7 +130,7 @@ export function Layout(): ReactNode {
         <ul className="gd-nav" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           {visibleItems.map((item) => (
             <li key={item.to}>
-              <NavLink to={item.to} className="gd-nav__link">
+              <NavLink to={item.to} className="gd-nav__link" onClick={() => setMenuOpen(false)}>
                 {item.label}
               </NavLink>
             </li>
