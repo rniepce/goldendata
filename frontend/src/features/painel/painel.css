@@ -210,3 +210,53 @@
 
 /* Form de edição dentro do drawer */
 .painel-drawer .gd-form-grid { gap: var(--gd-space-2); }
+
+/* KPI cards (faixa no topo do painel) */
+.painel-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--gd-space-3);
+  margin-bottom: var(--gd-space-4);
+}
+.painel-kpi {
+  border: 1px solid var(--gd-color-border);
+  border-radius: 10px;
+  background: var(--gd-color-surface, #fff);
+  padding: var(--gd-space-3);
+  border-left: 4px solid var(--kpi-cor, var(--gd-color-primary));
+}
+.painel-kpi__num { font-size: 1.7rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.painel-kpi__label { font-size: var(--gd-font-size-sm); color: var(--gd-color-text-muted); margin-top: 0.25rem; }
+
+/* Calendário */
+.painel-cal__head {
+  display: flex; align-items: center; gap: var(--gd-space-3);
+  margin-bottom: var(--gd-space-3);
+}
+.painel-cal__head h3 { margin: 0; text-transform: capitalize; min-width: 11rem; }
+.painel-cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.painel-cal__dow {
+  text-align: center; font-size: 0.7rem; font-weight: 700;
+  color: var(--gd-color-text-muted); text-transform: uppercase; padding: 0.2rem 0;
+}
+.painel-cal__cel {
+  min-height: 92px;
+  border: 1px solid var(--gd-color-border);
+  border-radius: 8px;
+  padding: 0.3rem;
+  background: var(--gd-color-surface, #fff);
+}
+.painel-cal__cel--fora { background: var(--gd-color-bg-subtle, #f3f4f6); opacity: 0.5; }
+.painel-cal__cel--hoje { box-shadow: inset 0 0 0 2px var(--gd-color-primary); }
+.painel-cal__dia { font-size: 0.72rem; font-weight: 600; color: var(--gd-color-text-muted); }
+.painel-cal__ev {
+  display: block; width: 100%; text-align: left;
+  border: 0; cursor: pointer;
+  font-size: 0.68rem; line-height: 1.2;
+  border-radius: 4px; padding: 0.12rem 0.3rem; margin-top: 0.15rem;
+  color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}

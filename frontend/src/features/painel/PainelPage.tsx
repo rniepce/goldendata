@@ -19,9 +19,11 @@ import type { Iniciativa } from '../../lib/types';
 import { IniciativaCard, iniciais } from './IniciativaCard';
 import { IniciativaDrawer } from './IniciativaDrawer';
 import { IniciativaForm } from './IniciativaForm';
+import { KpiBar } from './KpiBar';
+import { CalendarView } from './CalendarView';
 import './painel.css';
 
-type Visao = 'categoria' | 'status';
+type Visao = 'categoria' | 'status' | 'calendario';
 
 export function PainelPage(): ReactNode {
   const { user } = useAuth();
@@ -75,6 +77,9 @@ export function PainelPage(): ReactNode {
         </div>
       )}
 
+      {/* KPIs (refletem o filtro de responsável quando ativo) */}
+      <KpiBar itens={visiveis} />
+
       {/* Barra de responsáveis (filtro) */}
       <div className="painel-responsaveis" role="group" aria-label="Filtrar por responsável">
         <button
@@ -109,6 +114,9 @@ export function PainelPage(): ReactNode {
           <button type="button" aria-pressed={visao === 'status'} onClick={() => setVisao('status')}>
             Kanban por status
           </button>
+          <button type="button" aria-pressed={visao === 'calendario'} onClick={() => setVisao('calendario')}>
+            Calendário
+          </button>
         </div>
         {filtroResp && (
           <span style={{ color: 'var(--gd-color-text-muted)', fontSize: 'var(--gd-font-size-sm)' }}>
@@ -121,8 +129,10 @@ export function PainelPage(): ReactNode {
         <p>Nenhuma iniciativa para este filtro.</p>
       ) : visao === 'categoria' ? (
         <ViewCategoria itens={visiveis} onOpen={setAberta} />
-      ) : (
+      ) : visao === 'status' ? (
         <ViewStatus itens={visiveis} onOpen={setAberta} />
+      ) : (
+        <CalendarView itens={visiveis} onOpen={setAberta} />
       )}
 
       {aberta && <IniciativaDrawer item={aberta} onClose={() => setAberta(null)} />}
