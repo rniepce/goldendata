@@ -17,6 +17,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
+  { to: '/painel', label: 'Painel' },
   { to: '/catalogo', label: 'Catálogo' },
   { to: '/golden-datasets', label: 'Golden datasets' },
   { to: '/avaliacoes', label: 'Avaliações' },

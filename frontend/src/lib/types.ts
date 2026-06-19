@@ -35,6 +35,53 @@ export interface SupabaseUserInput {
   roles: Role[];
 }
 
+// ---------- Iniciativas do GEX-IA (Painel) ----------
+export type IniciativaCategoria =
+  | 'solucao_ia'
+  | 'educacional'
+  | 'suporte'
+  | 'governanca_normativo'
+  | 'cooperacao'
+  | 'pesquisa_prospeccao';
+
+export type IniciativaStatus =
+  | 'a_fazer'
+  | 'em_andamento'
+  | 'em_pausa'
+  | 'concluido'
+  | 'cancelado';
+
+export type IniciativaPrioridade = 'baixa' | 'media' | 'alta';
+
+export interface Iniciativa {
+  id: string;
+  titulo: string;
+  resumo: string | null;
+  categoria: IniciativaCategoria;
+  status: IniciativaStatus;
+  prioridade: IniciativaPrioridade;
+  responsavel_email: string | null;
+  responsavel_nome: string | null;
+  tool_id: string | null;
+  processo_sei: string | null;
+  prazo: string | null;
+  criado_em: string;
+  atualizado_em: string;
+}
+
+export interface IniciativaInput {
+  titulo: string;
+  resumo?: string | null;
+  categoria: IniciativaCategoria;
+  status?: IniciativaStatus;
+  prioridade?: IniciativaPrioridade;
+  responsavel_email?: string | null;
+  responsavel_nome?: string | null;
+  tool_id?: string | null;
+  processo_sei?: string | null;
+  prazo?: string | null;
+}
+
 // ---------- Registro (3.2) ----------
 export type Hospedagem = 'api_externa' | 'on_premise' | 'nuvem_homologada';
 

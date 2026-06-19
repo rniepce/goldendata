@@ -25,6 +25,8 @@ import type {
   GoldenCaseInput,
   GoldenDataset,
   GoldenDatasetInput,
+  Iniciativa,
+  IniciativaInput,
   KpiQuality,
   ModelBase,
   ModelBaseInput,
@@ -213,6 +215,20 @@ export const api = {
     request('/governance/audit-log/verify'),
   createRoleAssignment: (input: RoleAssignmentInput): Promise<RoleAssignment> =>
     request('/governance/role-assignments', { method: 'POST', body: input }),
+
+  // Iniciativas do GEX-IA (Painel)
+  listIniciativas: (params?: {
+    categoria?: string;
+    status?: string;
+    responsavel?: string;
+  }): Promise<Iniciativa[]> => request('/iniciativas', { query: params }),
+  getIniciativa: (id: string): Promise<Iniciativa> => request(`/iniciativas/${id}`),
+  createIniciativa: (input: IniciativaInput): Promise<Iniciativa> =>
+    request('/iniciativas', { method: 'POST', body: input }),
+  updateIniciativa: (id: string, input: Partial<IniciativaInput>): Promise<Iniciativa> =>
+    request(`/iniciativas/${id}`, { method: 'PATCH', body: input }),
+  deleteIniciativa: (id: string): Promise<void> =>
+    request(`/iniciativas/${id}`, { method: 'DELETE' }),
 
   // Gestão de usuários (Supabase Auth)
   listUsers: (): Promise<SupabaseUser[]> => request('/governance/users'),

@@ -13,6 +13,7 @@ import type {
   GateDecisionInput,
   GoldenCaseInput,
   GoldenDatasetInput,
+  IniciativaInput,
   ModelBaseInput,
   PromptVersionInput,
   RoleAssignmentInput,
@@ -32,7 +33,38 @@ export const queryKeys = {
     ['auditLog', entidade ?? '', entidadeId ?? ''] as const,
   auditVerify: ['auditVerify'] as const,
   users: ['users'] as const,
+  iniciativas: ['iniciativas'] as const,
+  iniciativa: (id: string) => ['iniciativa', id] as const,
 };
+
+export function useIniciativas() {
+  return useQuery({ queryKey: queryKeys.iniciativas, queryFn: () => api.listIniciativas() });
+}
+
+export function useCreateIniciativa() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.createIniciativa,
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.iniciativas }),
+  });
+}
+
+export function useUpdateIniciativa() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Partial<IniciativaInput> }) =>
+      api.updateIniciativa(id, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.iniciativas }),
+  });
+}
+
+export function useDeleteIniciativa() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteIniciativa,
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.iniciativas }),
+  });
+}
 
 export function useUsers() {
   return useQuery({ queryKey: queryKeys.users, queryFn: api.listUsers });

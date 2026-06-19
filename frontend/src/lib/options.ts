@@ -3,6 +3,7 @@
  */
 
 import type { SelectOption } from '../components/ui';
+import type { IniciativaCategoria, IniciativaStatus, IniciativaPrioridade } from './types';
 
 export const HOSPEDAGEM_OPTIONS: SelectOption[] = [
   { value: 'api_externa', label: 'API externa' },
@@ -70,4 +71,63 @@ export const VEDACOES_ITENS: { chave: string; rotulo: string }[] = [
   { chave: 'dados_sensiveis_sem_base', rotulo: 'Veda uso de dados sensíveis sem base legal' },
   { chave: 'conteudo_nao_jurisdicional', rotulo: 'Veda uso fora da função jurisdicional' },
   { chave: 'treino_com_sigilo', rotulo: 'Veda treino com dados sob sigilo' },
+];
+
+// ---------- Iniciativas do GEX-IA (Painel) ----------
+type BadgeTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
+
+export const CATEGORIA_META: Record<
+  IniciativaCategoria,
+  { label: string; tone: BadgeTone; cor: string }
+> = {
+  solucao_ia: { label: 'Solução de IA', tone: 'info', cor: '#2563eb' },
+  educacional: { label: 'Educacional', tone: 'success', cor: '#16a34a' },
+  suporte: { label: 'Suporte', tone: 'warning', cor: '#d97706' },
+  governanca_normativo: { label: 'Governança & Normativo', tone: 'danger', cor: '#dc2626' },
+  cooperacao: { label: 'Cooperação', tone: 'info', cor: '#0891b2' },
+  pesquisa_prospeccao: { label: 'Pesquisa & Prospecção', tone: 'neutral', cor: '#7c3aed' },
+};
+
+export const STATUS_META: Record<IniciativaStatus, { label: string; tone: BadgeTone }> = {
+  a_fazer: { label: 'A fazer', tone: 'neutral' },
+  em_andamento: { label: 'Em andamento', tone: 'info' },
+  em_pausa: { label: 'Em pausa', tone: 'warning' },
+  concluido: { label: 'Concluído', tone: 'success' },
+  cancelado: { label: 'Cancelado', tone: 'danger' },
+};
+
+export const PRIORIDADE_META: Record<IniciativaPrioridade, { label: string; tone: BadgeTone }> = {
+  baixa: { label: 'Baixa', tone: 'neutral' },
+  media: { label: 'Média', tone: 'info' },
+  alta: { label: 'Alta', tone: 'danger' },
+};
+
+export const CATEGORIA_OPTIONS: SelectOption[] = (
+  Object.keys(CATEGORIA_META) as IniciativaCategoria[]
+).map((k) => ({ value: k, label: CATEGORIA_META[k].label }));
+
+export const STATUS_INICIATIVA_OPTIONS: SelectOption[] = (
+  Object.keys(STATUS_META) as IniciativaStatus[]
+).map((k) => ({ value: k, label: STATUS_META[k].label }));
+
+export const PRIORIDADE_OPTIONS: SelectOption[] = (
+  Object.keys(PRIORIDADE_META) as IniciativaPrioridade[]
+).map((k) => ({ value: k, label: PRIORIDADE_META[k].label }));
+
+/** Ordem das categorias e status nas visões do painel. */
+export const CATEGORIA_ORDEM: IniciativaCategoria[] = [
+  'solucao_ia', 'educacional', 'suporte', 'governanca_normativo', 'cooperacao', 'pesquisa_prospeccao',
+];
+export const STATUS_ORDEM: IniciativaStatus[] = [
+  'a_fazer', 'em_andamento', 'em_pausa', 'concluido', 'cancelado',
+];
+
+/** Equipe atual do GEX-IA (para o seletor de responsável nas iniciativas). */
+export const MEMBROS_GEXIA: { email: string; nome: string }[] = [
+  { email: 'rafael.pimentel@tjmg.jus.br', nome: 'Rafael Niepce Verona Pimentel' },
+  { email: 'victor.leal@tjmg.jus.br', nome: 'Victor Moreira Mulin Leal' },
+  { email: 'gustavo.soares@tjmg.jus.br', nome: 'Gustavo Resende Queiroz Soares' },
+  { email: 'erika.porto@tjmg.jus.br', nome: 'Érika Porto' },
+  { email: 'urick.teixeira@tjmg.jus.br', nome: 'Urick Alberth' },
+  { email: 'isabella.andrade@tjmg.jus.br', nome: 'Isabella Andrade' },
 ];

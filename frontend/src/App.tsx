@@ -8,6 +8,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { RequireAuth } from './components/RequireAuth';
 import { CallbackScreen } from './features/auth/CallbackScreen';
+import { PainelPage } from './features/painel/PainelPage';
 import { CatalogPage } from './features/catalog/CatalogPage';
 import { ToolDetailPage } from './features/toolDetail/ToolDetailPage';
 import { ToolVersionsPage } from './features/toolVersions/ToolVersionsPage';
@@ -30,7 +31,8 @@ export function App(): ReactNode {
           </RequireAuth>
         }
       >
-        <Route index element={<Navigate to="/catalogo" replace />} />
+        <Route index element={<Navigate to="/painel" replace />} />
+        <Route path="/painel" element={<PainelPage />} />
         <Route path="/catalogo" element={<CatalogPage />} />
         <Route path="/ferramentas/:id" element={<ToolDetailPage />} />
         <Route path="/ferramentas/:id/versoes" element={<ToolVersionsPage />} />
@@ -69,7 +71,7 @@ export function App(): ReactNode {
             </RequireAuth>
           }
         />
-        <Route path="*" element={<Navigate to="/catalogo" replace />} />
+        <Route path="*" element={<Navigate to="/painel" replace />} />
       </Route>
     </Routes>
   );

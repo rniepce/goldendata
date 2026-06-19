@@ -1,0 +1,180 @@
+/* Painel do GEX-IA — cards interativos, kanban, barra de responsáveis e drawer. */
+
+.painel-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gd-space-3);
+  margin-bottom: var(--gd-space-4);
+}
+
+.painel-toggle {
+  display: inline-flex;
+  border: 1px solid var(--gd-color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.painel-toggle button {
+  border: 0;
+  background: transparent;
+  padding: 0.4rem 0.9rem;
+  font: inherit;
+  font-size: var(--gd-font-size-sm);
+  cursor: pointer;
+  color: var(--gd-color-text);
+}
+.painel-toggle button[aria-pressed='true'] {
+  background: var(--gd-color-primary);
+  color: #fff;
+}
+
+/* Barra de responsáveis */
+.painel-responsaveis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gd-space-2);
+  margin-bottom: var(--gd-space-4);
+}
+.painel-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--gd-color-border);
+  background: var(--gd-color-surface, #fff);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem 0.25rem 0.3rem;
+  cursor: pointer;
+  font-size: var(--gd-font-size-sm);
+  color: var(--gd-color-text);
+}
+.painel-chip[aria-pressed='true'] {
+  border-color: var(--gd-color-primary);
+  box-shadow: 0 0 0 1px var(--gd-color-primary);
+}
+.painel-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--gd-color-primary);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+.painel-chip__count {
+  font-variant-numeric: tabular-nums;
+  color: var(--gd-color-text-muted);
+}
+
+/* Seções (visão por categoria) */
+.painel-secao { margin-bottom: var(--gd-space-5); }
+.painel-secao__titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 var(--gd-space-3);
+  font-size: 1rem;
+}
+.painel-secao__bullet {
+  width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto;
+}
+.painel-secao__count { color: var(--gd-color-text-muted); font-weight: 400; }
+
+.painel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--gd-space-3);
+}
+
+/* Kanban */
+.painel-kanban {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(260px, 1fr);
+  gap: var(--gd-space-3);
+  overflow-x: auto;
+  padding-bottom: var(--gd-space-2);
+}
+.painel-coluna {
+  background: var(--gd-color-bg-subtle, #f3f4f6);
+  border-radius: 10px;
+  padding: var(--gd-space-2);
+  min-height: 80px;
+}
+.painel-coluna__titulo {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: var(--gd-font-size-sm); font-weight: 700;
+  padding: 0.3rem 0.4rem var(--gd-space-2);
+}
+.painel-coluna .painel-card { margin-bottom: var(--gd-space-2); }
+
+/* Card */
+.painel-card {
+  position: relative;
+  text-align: left;
+  width: 100%;
+  border: 1px solid var(--gd-color-border);
+  border-left: 4px solid var(--cat-cor, var(--gd-color-primary));
+  border-radius: 10px;
+  background: var(--gd-color-surface, #fff);
+  padding: var(--gd-space-3);
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+  display: block;
+}
+.painel-card:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+.painel-card__titulo {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin: 0 0 0.4rem;
+  line-height: 1.3;
+}
+.painel-card__resp {
+  display: flex; align-items: center; gap: 0.4rem;
+  color: var(--gd-color-text-muted);
+  font-size: var(--gd-font-size-sm);
+  margin-bottom: 0.5rem;
+}
+.painel-card__badges { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+
+/* Resumo revelado no hover */
+.painel-card__resumo {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.25s ease;
+  font-size: var(--gd-font-size-sm);
+  color: var(--gd-color-text);
+  margin-top: 0;
+}
+.painel-card:hover .painel-card__resumo,
+.painel-card:focus-visible .painel-card__resumo {
+  max-height: 220px;
+  opacity: 1;
+  margin-top: 0.6rem;
+}
+
+/* Drawer de detalhes */
+.painel-drawer__overlay {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 50;
+  display: flex; justify-content: flex-end;
+}
+.painel-drawer {
+  width: min(480px, 100%);
+  background: var(--gd-color-surface, #fff);
+  height: 100%;
+  overflow-y: auto;
+  padding: var(--gd-space-4);
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.15);
+}
+.painel-drawer__close {
+  border: 0; background: transparent; cursor: pointer;
+  font-size: 1.4rem; line-height: 1; color: var(--gd-color-text-muted);
+}

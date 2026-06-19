@@ -18,6 +18,7 @@ from app.core.db import execute, get_pool
 from app.core.deps import Ctx, get_ctx
 from app.domain.evaluation.router import router as evaluation_router
 from app.domain.governance.router import router as governance_router
+from app.domain.iniciativas.router import router as iniciativas_router
 from app.domain.registry.router import router as registry_router
 from app.mcp_server import mcp as mcp_server
 
@@ -94,6 +95,7 @@ app.add_middleware(
 app.include_router(registry_router, prefix=settings.api_prefix)
 app.include_router(evaluation_router, prefix=settings.api_prefix)
 app.include_router(governance_router, prefix=settings.api_prefix)
+app.include_router(iniciativas_router, prefix=settings.api_prefix)
 
 
 @app.get("/health", tags=["infra"])
