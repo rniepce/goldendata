@@ -178,3 +178,35 @@
   border: 0; background: transparent; cursor: pointer;
   font-size: 1.4rem; line-height: 1; color: var(--gd-color-text-muted);
 }
+
+/* Indicador de prioridade (dot no canto do card) */
+.painel-card__pri {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+/* Badge de categoria com cor própria (distinta de status/prioridade) */
+.painel-cat-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.12rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.painel-card__prazo {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.74rem;
+  color: var(--gd-color-text-muted);
+  margin-top: 0.5rem;
+}
+.painel-card__prazo--vencido { color: #dc2626; font-weight: 600; }
+
+/* Form de edição dentro do drawer */
+.painel-drawer .gd-form-grid { gap: var(--gd-space-2); }

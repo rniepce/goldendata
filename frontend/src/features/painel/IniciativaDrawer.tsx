@@ -1,16 +1,23 @@
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Badge, MetaItem, SelectField } from '../../components/ui';
+import { Badge, ErrorAlert, MetaItem, SelectField, SuccessAlert, TextAreaField, TextField } from '../../components/ui';
 import {
-  CATEGORIA_META,
+  CATEGORIA_OPTIONS,
   MEMBROS_GEXIA,
   PRIORIDADE_META,
+  PRIORIDADE_OPTIONS,
   STATUS_INICIATIVA_OPTIONS,
   STATUS_META,
 } from '../../lib/options';
 import { useAuth, hasAnyRole } from '../../lib/auth-oidc';
 import { useUpdateIniciativa, useDeleteIniciativa } from '../../lib/queries';
-import type { Iniciativa, IniciativaStatus } from '../../lib/types';
+import type {
+  Iniciativa,
+  IniciativaCategoria,
+  IniciativaPrioridade,
+  IniciativaStatus,
+} from '../../lib/types';
+import { CategoriaBadge } from './IniciativaCard';
 
 const RESP_OPTIONS = [
   { value: '', label: 'Sem responsável' },
@@ -28,19 +35,37 @@ export function IniciativaDrawer({
   const podeEditar = hasAnyRole(user, 'owner_ferramenta', 'coordenador_comite', 'admin');
   const update = useUpdateIniciativa();
   const remove = useDeleteIniciativa();
+
+  const [titulo, setTitulo] = useState(item.titulo);
+  const [resumo, setResumo] = useState(item.resumo ?? '');
+  const [categoria, setCategoria] = useState<IniciativaCategoria>(item.categoria);
   const [status, setStatus] = useState<IniciativaStatus>(item.status);
+  const [prioridade, setPrioridade] = useState<IniciativaPrioridade>(item.prioridade);
   const [respEmail, setRespEmail] = useState(item.responsavel_email ?? '');
+  const [prazo, setPrazo] = useState(item.prazo ?? '');
+  const [sei, setSei] = useState(item.processo_sei ?? '');
+  const [salvo, setSalvo] = useState(false);
 
-  const cat = CATEGORIA_META[item.categoria];
-
-  function salvarStatus(novo: string): void {
-    setStatus(novo as IniciativaStatus);
-    update.mutate({ id: item.id, input: { status: novo as IniciativaStatus } });
-  }
-  function salvarResponsavel(email: string): void {
-    setRespEmail(email);
-    const nome = MEMBROS_GEXIA.find((m) => m.email === email)?.nome ?? null;
-    update.mutate({ id: item.id, input: { responsavel_email: email || null, responsavel_nome: nome } });
+  function salvar(): void {
+    setSalvo(false);
+    const nome = MEMBROS_GEXIA.find((m) => m.email === respEmail)?.nome ?? null;
+    update.mutate(
+      {
+        id: item.id,
+        input: {
+          titulo: titulo.trim(),
+          resumo: resumo.trim() || null,
+          categoria,
+          status,
+          prioridade,
+          responsavel_email: respEmail || null,
+          responsavel_nome: nome,
+          prazo: prazo || null,
+          processo_sei: sei.trim() || null,
+        },
+      },
+      { onSuccess: () => setSalvo(true) },
+    );
   }
 
   return (
@@ -54,49 +79,66 @@ export function IniciativaDrawer({
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', margin: '0.6rem 0 1rem' }}>
-          <Badge tone={cat.tone}>{cat.label}</Badge>
+          <CategoriaBadge categoria={categoria} />
           <Badge tone={STATUS_META[status].tone}>{STATUS_META[status].label}</Badge>
-          <Badge tone={PRIORIDADE_META[item.prioridade].tone}>
-            Prioridade {PRIORIDADE_META[item.prioridade].label.toLowerCase()}
+          <Badge tone={PRIORIDADE_META[prioridade].tone}>
+            Prioridade {PRIORIDADE_META[prioridade].label.toLowerCase()}
           </Badge>
         </div>
 
-        {item.resumo && <p style={{ lineHeight: 1.5 }}>{item.resumo}</p>}
-
-        <div className="gd-meta-grid" style={{ margin: '1rem 0' }}>
-          <MetaItem label="Responsável">{item.responsavel_nome ?? '—'}</MetaItem>
-          <MetaItem label="Processo SEI">{item.processo_sei ?? '—'}</MetaItem>
-          <MetaItem label="Prazo">{item.prazo ?? '—'}</MetaItem>
-          <MetaItem label="Atualizado em">
-            {new Date(item.atualizado_em).toLocaleDateString('pt-BR')}
-          </MetaItem>
-        </div>
-
         {item.tool_id && (
-          <Link className="gd-btn gd-btn--secondary gd-btn--sm" to={`/ferramentas/${item.tool_id}`}>
-            Abrir ficha técnica da solução
-          </Link>
+          <p style={{ marginTop: 0 }}>
+            <Link className="gd-btn gd-btn--secondary gd-btn--sm" to={`/ferramentas/${item.tool_id}`}>
+              Abrir ficha técnica da solução
+            </Link>
+          </p>
         )}
 
-        {podeEditar && (
-          <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--gd-color-border)', paddingTop: '1rem' }}>
-            <h3 style={{ fontSize: '0.95rem' }}>Gerir</h3>
-            <SelectField label="Status" value={status} onChange={salvarStatus} options={STATUS_INICIATIVA_OPTIONS} />
-            <SelectField label="Responsável" value={respEmail} onChange={salvarResponsavel} options={RESP_OPTIONS} />
-            <button
-              type="button"
-              className="gd-btn gd-btn--secondary gd-btn--sm"
-              style={{ marginTop: '0.5rem', color: 'var(--gd-color-danger, #dc2626)' }}
-              disabled={remove.isPending}
-              onClick={() => {
-                if (confirm(`Excluir a iniciativa "${item.titulo}"?`)) {
-                  remove.mutate(item.id, { onSuccess: onClose });
-                }
-              }}
-            >
-              Excluir iniciativa
-            </button>
+        {podeEditar ? (
+          <div style={{ marginTop: '0.5rem' }}>
+            {update.isError && <ErrorAlert error={update.error} />}
+            {salvo && <SuccessAlert>Alterações salvas.</SuccessAlert>}
+            <TextField label="Título" required value={titulo} onChange={setTitulo} />
+            <TextAreaField label="Resumo" value={resumo} onChange={setResumo} hint="Aparece ao passar o mouse no card." />
+            <div className="gd-form-grid">
+              <SelectField label="Categoria" value={categoria} onChange={(v) => setCategoria(v as IniciativaCategoria)} options={CATEGORIA_OPTIONS} />
+              <SelectField label="Status" value={status} onChange={(v) => setStatus(v as IniciativaStatus)} options={STATUS_INICIATIVA_OPTIONS} />
+              <SelectField label="Prioridade" value={prioridade} onChange={(v) => setPrioridade(v as IniciativaPrioridade)} options={PRIORIDADE_OPTIONS} />
+              <SelectField label="Responsável" value={respEmail} onChange={setRespEmail} options={RESP_OPTIONS} />
+              <TextField label="Prazo" type="date" value={prazo} onChange={setPrazo} />
+              <TextField label="Processo SEI" value={sei} onChange={setSei} />
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+              <button type="button" className="gd-btn" disabled={update.isPending || !titulo.trim()} onClick={salvar}>
+                {update.isPending ? 'Salvando…' : 'Salvar alterações'}
+              </button>
+              <button
+                type="button"
+                className="gd-btn gd-btn--secondary gd-btn--sm"
+                style={{ color: 'var(--gd-color-danger, #dc2626)' }}
+                disabled={remove.isPending}
+                onClick={() => {
+                  if (confirm(`Excluir a iniciativa "${item.titulo}"?`)) {
+                    remove.mutate(item.id, { onSuccess: onClose });
+                  }
+                }}
+              >
+                Excluir
+              </button>
+            </div>
           </div>
+        ) : (
+          <>
+            {item.resumo && <p style={{ lineHeight: 1.5 }}>{item.resumo}</p>}
+            <div className="gd-meta-grid" style={{ marginTop: '1rem' }}>
+              <MetaItem label="Responsável">{item.responsavel_nome ?? '—'}</MetaItem>
+              <MetaItem label="Processo SEI">{item.processo_sei ?? '—'}</MetaItem>
+              <MetaItem label="Prazo">{item.prazo ?? '—'}</MetaItem>
+              <MetaItem label="Atualizado em">
+                {new Date(item.atualizado_em).toLocaleDateString('pt-BR')}
+              </MetaItem>
+            </div>
+          </>
         )}
       </aside>
     </div>
