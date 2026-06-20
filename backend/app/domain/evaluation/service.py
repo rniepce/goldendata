@@ -7,6 +7,7 @@ from psycopg.types.json import Jsonb
 
 from app.core.db import execute, fetch_all, fetch_one
 from app.metrics import levenshtein, normalized_similarity
+from app.metrics.pii import pii_vazada
 
 from . import schemas
 from .gate import HIGHER_IS_BETTER, compliance_blocks, evaluate_gate
@@ -105,6 +106,9 @@ def import_outputs(conn: Any, run_id: str, body: schemas.OutputImport) -> dict:
         _insert_result(conn, run_id, case["id"], "deterministic", "exact_match", cs.exact_match)
         _insert_result(conn, run_id, case["id"], "statistical", "edit_distance", cs.edit_distance)
         _insert_result(conn, run_id, case["id"], "statistical", "similarity", cs.similarity)
+        # PII vazada na saída (não presente na referência) — proporção bloqueável no gate.
+        pii = pii_vazada(item.texto_gerado, case["saida_referencia"])
+        _insert_result(conn, run_id, case["id"], "deterministic", "pii_vazada", 1.0 if pii else 0.0)
         for c in cs.citacoes:
             execute(
                 conn,
@@ -138,7 +142,8 @@ def compute_aggregate(conn: Any, run_id: str) -> dict[str, float]:
     for row in fetch_all(
         conn,
         """SELECT metrica, AVG(score)::float AS media FROM eval_result
-           WHERE eval_run_id = %s AND metrica IN ('exact_match','similarity','edit_distance')
+           WHERE eval_run_id = %s
+             AND metrica IN ('exact_match','similarity','edit_distance','pii_vazada')
            GROUP BY metrica""",
         (run_id,),
     ):
@@ -176,6 +181,33 @@ def compute_aggregate(conn: Any, run_id: str) -> dict[str, float]:
             if ann[k] is not None:
                 agg[k] = ann[k]
     return agg
+
+
+_EIXOS_FATIA = {"dificuldade", "categoria_risco", "origem"}
+
+
+def compute_aggregate_por_fatia(conn: Any, run_id: str, eixo: str) -> dict:
+    """Métricas agregadas por FATIA do golden_case (#46): revela falhas
+    sistemáticas que a média global esconde. eixo ∈ dificuldade/categoria_risco/origem."""
+    if eixo not in _EIXOS_FATIA:
+        raise ValueError("eixo inválido (use dificuldade, categoria_risco ou origem)")
+    rows = fetch_all(
+        conn,
+        f"""SELECT gc.{eixo}::text AS fatia, er.metrica::text AS metrica,
+                   AVG(er.score)::float AS media, count(DISTINCT er.golden_case_id) AS n
+            FROM eval_result er JOIN golden_case gc ON gc.id = er.golden_case_id
+            WHERE er.eval_run_id = %s
+              AND er.metrica IN ('similarity','exact_match','pii_vazada')
+            GROUP BY gc.{eixo}, er.metrica
+            ORDER BY fatia""",  # noqa: S608 (eixo na allowlist _EIXOS_FATIA)
+        (run_id,),
+    )
+    fatias: dict[str, dict[str, float]] = {}
+    for r in rows:
+        nome = r["fatia"] or "—"
+        fatias.setdefault(nome, {})[r["metrica"]] = r["media"]
+        fatias[nome]["_n"] = r["n"]
+    return {"eixo": eixo, "fatias": fatias}
 
 
 def _build_regression_report(conn: Any, run_id: str, baseline_id: str, agg: dict[str, float]) -> dict:

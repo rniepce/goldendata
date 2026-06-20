@@ -4,17 +4,21 @@
  */
 
 import { useState, type FormEvent, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   useCreateEvalRun,
   useEvalRun,
   useSubmitEvalOutputs,
 } from '../../lib/queries';
+import { api } from '../../lib/api';
 import {
   Badge,
   Card,
   ErrorAlert,
   InfoAlert,
+  Loading,
   PageHeader,
+  SelectField,
   SuccessAlert,
   TextAreaField,
   TextField,
@@ -43,6 +47,7 @@ export function EvaluationsPage(): ReactNode {
         <>
           <ImportOutputsForm runId={runId} onResult={setResultado} />
           {resultado && <RunMetrics resultado={resultado} />}
+          <FatiasView runId={runId} />
           <RunDetails runId={runId} />
         </>
       )}
@@ -193,6 +198,70 @@ function RunMetrics({ resultado }: { resultado: EvalRunResult }): ReactNode {
               ))}
             </ul>
           )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function FatiasView({ runId }: { runId: string }): ReactNode {
+  const [eixo, setEixo] = useState('dificuldade');
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['fatias', runId, eixo],
+    queryFn: () => api.evalFatias(runId, eixo),
+  });
+  const fatias = data?.fatias ?? {};
+  const nomes = Object.keys(fatias);
+  const metricas = Array.from(
+    new Set(nomes.flatMap((n) => Object.keys(fatias[n]).filter((k) => k !== '_n'))),
+  );
+  return (
+    <Card title="Métricas por fatia">
+      <div style={{ maxWidth: 280, marginBottom: '1rem' }}>
+        <SelectField
+          label="Eixo"
+          value={eixo}
+          onChange={setEixo}
+          options={[
+            { value: 'dificuldade', label: 'Dificuldade' },
+            { value: 'categoria_risco', label: 'Categoria de risco' },
+            { value: 'origem', label: 'Origem (sintético/produção)' },
+          ]}
+        />
+      </div>
+      {isLoading && <Loading label="Calculando fatias…" />}
+      {isError && <ErrorAlert error={error} />}
+      {!isLoading && !isError && nomes.length === 0 && (
+        <p style={{ color: 'var(--gd-color-text-muted)' }}>Sem dados de fatia para esta execução.</p>
+      )}
+      {nomes.length > 0 && (
+        <div style={{ overflowX: 'auto' }}>
+          <table className="gd-table">
+            <thead>
+              <tr>
+                <th scope="col">Fatia</th>
+                <th scope="col">n</th>
+                {metricas.map((m) => (
+                  <th key={m} scope="col">
+                    {m.replace(/_/g, ' ')}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {nomes.map((n) => (
+                <tr key={n}>
+                  <td>{n}</td>
+                  <td>{fatias[n]._n ?? 0}</td>
+                  {metricas.map((m) => (
+                    <td key={m} className="gd-mono">
+                      {fatias[n][m] != null ? fatias[n][m].toFixed(3) : '—'}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </Card>

@@ -24,6 +24,7 @@ HIGHER_IS_BETTER: dict[str, bool] = {
     "taxa_alucinacao": False,
     "taxa_citacao_invalida": False,
     "citation": False,  # nº de citações inválidas
+    "pii_vazada": False,  # proporção de saídas com PII vazada (#48)
 }
 
 

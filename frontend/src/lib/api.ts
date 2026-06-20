@@ -247,6 +247,11 @@ export const api = {
     }),
   getEvalRun: (runId: string): Promise<EvalRun> =>
     request(`/evaluation/eval-runs/${runId}`),
+  evalFatias: (
+    runId: string,
+    eixo: string,
+  ): Promise<{ eixo: string; fatias: Record<string, Record<string, number>> }> =>
+    request(`/evaluation/eval-runs/${runId}/fatias`, { query: { eixo } }),
 
   createAnnotation: (input: AnnotationInput): Promise<Annotation> =>
     request('/evaluation/annotations', { method: 'POST', body: input }),

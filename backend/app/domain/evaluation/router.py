@@ -52,6 +52,16 @@ def get_run(run_id: str, ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
     return run
 
 
+@router.get("/eval-runs/{run_id}/fatias")
+def get_fatias(
+    run_id: str, eixo: str = "dificuldade", ctx: Ctx = Depends(get_ctx), _=Depends(_READ)
+):
+    try:
+        return service.compute_aggregate_por_fatia(ctx.conn, run_id, eixo)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
 @router.post("/annotations", status_code=201)
 def annotate(body: schemas.AnnotationCreate, ctx: Ctx = Depends(get_ctx), _=Depends(_ANNOTATE)):
     try:
