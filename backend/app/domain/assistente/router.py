@@ -16,6 +16,7 @@ from app.core import doctext, ia, rag
 from app.core.db import fetch_all, fetch_one
 from app.core.deps import Ctx, get_ctx
 from app.core.security_keycloak import require_role
+from app.domain.cockpit import service as cockpit_svc
 from app.domain.evaluation.gate import evaluate_gate
 from app.domain.registry import service as registry_svc
 
@@ -442,6 +443,71 @@ def plano_pessoal(ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
         except (RuntimeError, ValueError):
             pass
     return resultado
+
+
+# ---------------- IA: sugestão de risco AR/BR (#26) ----------------
+class SugerirRisco(BaseModel):
+    texto: str = Field(min_length=10)
+
+
+@router.post("/ia/sugerir-risco")
+def sugerir_risco(body: SugerirRisco, ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
+    system = (
+        "Você é analista de governança de IA do TJMG. A partir da descrição de uma solução, "
+        "sugira a categoria de risco da Resolução CNJ 615/2025: 'alto' ou 'baixo'. Alto risco "
+        "tipicamente envolve apoio a decisão judicial, dados sensíveis/sigilosos ou impacto "
+        "direto em direitos das partes. Responda APENAS um JSON com as chaves: categoria "
+        "(alto|baixo|indefinido) e justificativa (1-2 frases). A classificação final é humana. "
+        + _CNJ_RISCO
+    )
+    try:
+        bruto = ia.chamar(system, f"DESCRIÇÃO:\n{body.texto[:4000]}", max_tokens=400)
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    dados = doctext.parse_primeiro_json(bruto)
+    return {
+        "categoria": dados.get("categoria"),
+        "justificativa": dados.get("justificativa"),
+        "bruto": None if dados else bruto,
+    }
+
+
+# ---------------- IA: briefing/pauta prospectiva de reunião (#60) ----------------
+@router.get("/ia/briefing-reuniao")
+def briefing_reuniao(ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
+    dados = cockpit_svc.get_cockpit(ctx.conn)
+    c = dados["contadores"]
+    linhas = [f"Gates aguardando homologação: {c['gates']}"]
+    linhas += [f"  - gate de {g['tool_nome']} (versão {g['versao']})" for g in dados["gates_aguardando"][:10]]
+    linhas.append(f"Revisões vencidas/a vencer (≤30d): {c['revisoes']}")
+    linhas += [
+        f"  - {r['nome']} ({'VENCIDA' if r['vencida'] else r['proxima_revisao_em']})"
+        for r in dados["revisoes"][:10]
+    ]
+    linhas.append(
+        f"RIPD/AIA pendente: {c['ripd']} · Incidentes em aberto: {c['incidentes']} · "
+        f"Comentários não resolvidos: {c['comentarios']} · Iniciativas atrasadas: {c['iniciativas']}"
+    )
+    linhas += [
+        f"  - iniciativa atrasada: {i['titulo']} (prazo {i['prazo']})"
+        for i in dados["iniciativas_atrasadas"][:10]
+    ]
+    estado = "\n".join(linhas)
+    system = (
+        "Você é chefe de gabinete do GEX-IA (TJMG). A partir do estado atual, monte uma PAUTA "
+        "DE REUNIÃO prospectiva e objetiva, organizada em: 'A decidir', 'Bloqueado/aguardando' "
+        "e 'Vence até a próxima reunião'. Itens curtos e acionáveis, em português. Não invente "
+        "itens além do estado fornecido. " + _CNJ_RISCO
+    )
+    try:
+        pauta = ia.chamar(system, f"ESTADO ATUAL:\n{estado}", max_tokens=800)
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    return {"pauta": pauta, "contadores": c}
 
 
 @router.get("/ia/disponivel")

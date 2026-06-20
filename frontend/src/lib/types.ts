@@ -217,6 +217,27 @@ export interface PlanoPessoal {
   resumo_ia?: string;
 }
 
+// ---------- Quick wins Tier B ----------
+export interface RiscoSugestao {
+  categoria: string | null; // 'alto' | 'baixo' | 'indefinido'
+  justificativa: string | null;
+  bruto: string | null;
+}
+
+export interface BriefingReuniao {
+  pauta: string;
+  contadores: CockpitData['contadores'];
+}
+
+export interface ToolSaude {
+  nivel: 'verde' | 'ambar' | 'vermelho';
+  pendencias_conformidade: number;
+  taxa_aceitacao: number | null;
+  taxa_alucinacao: number | null;
+  em_producao: boolean;
+  sinais: string[];
+}
+
 // ---------- Cockpit de pendências do comitê (#13) ----------
 export interface CockpitData {
   gates_aguardando: { gate_id: string; tool_nome: string; versao: string; criado_em: string }[];

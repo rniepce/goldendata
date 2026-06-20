@@ -126,11 +126,18 @@ export const STATUS_ORDEM: IniciativaStatus[] = [
 ];
 
 /** Equipe atual do GEX-IA (para o seletor de responsável nas iniciativas). */
-export const MEMBROS_GEXIA: { email: string; nome: string }[] = [
-  { email: 'rafael.pimentel@tjmg.jus.br', nome: 'Rafael Niepce Verona Pimentel' },
-  { email: 'victor.leal@tjmg.jus.br', nome: 'Victor Moreira Mulin Leal' },
-  { email: 'gustavo.soares@tjmg.jus.br', nome: 'Gustavo Resende Queiroz Soares' },
-  { email: 'erika.porto@tjmg.jus.br', nome: 'Érika Porto' },
-  { email: 'urick.teixeira@tjmg.jus.br', nome: 'Urick Alberth' },
-  { email: 'isabella.andrade@tjmg.jus.br', nome: 'Isabella Andrade' },
+// Cada membro do GEX-IA tem uma cor distinta (texto branco legível sobre ela),
+// usada nos avatares/chips de responsável no Painel.
+export const MEMBROS_GEXIA: { email: string; nome: string; cor: string }[] = [
+  { email: 'rafael.pimentel@tjmg.jus.br', nome: 'Rafael Niepce Verona Pimentel', cor: '#7a1e2b' },
+  { email: 'victor.leal@tjmg.jus.br', nome: 'Victor Moreira Mulin Leal', cor: '#1d4e89' },
+  { email: 'gustavo.soares@tjmg.jus.br', nome: 'Gustavo Resende Queiroz Soares', cor: '#2f5d3a' },
+  { email: 'erika.porto@tjmg.jus.br', nome: 'Érika Porto', cor: '#8a5a00' },
+  { email: 'urick.teixeira@tjmg.jus.br', nome: 'Urick Alberth', cor: '#5b3e8e' },
+  { email: 'isabella.andrade@tjmg.jus.br', nome: 'Isabella Andrade', cor: '#9d2449' },
 ];
+
+/** Cor do membro pelo e-mail (fallback neutro para "sem responsável"/desconhecido). */
+export function corMembro(email?: string | null): string {
+  return MEMBROS_GEXIA.find((m) => m.email === email)?.cor ?? '#5f5749';
+}

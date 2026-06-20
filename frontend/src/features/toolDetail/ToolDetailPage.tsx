@@ -25,6 +25,7 @@ import { PromptVersionForm } from './PromptVersionForm';
 import { ToolVersionForm } from './ToolVersionForm';
 import { DataInventoryForm } from './DataInventoryForm';
 import { ConformidadeCard } from './ConformidadeCard';
+import { SaudeCard } from './SaudeCard';
 import { DossieEditForm } from './DossieEditForm';
 
 type SectionId =
@@ -129,6 +130,8 @@ export function ToolDetailPage(): ReactNode {
           </>
         )}
       </Card>
+
+      <SaudeCard toolId={ferramenta.id} />
 
       <ConformidadeCard toolId={ferramenta.id} />
 

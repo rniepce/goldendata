@@ -25,11 +25,14 @@ import type {
   GoldenCaseInput,
   GoldenDataset,
   GoldenDatasetInput,
+  BriefingReuniao,
   ChatResposta,
   ChatTurno,
   CockpitData,
   Comentario,
   ComentarioInput,
+  RiscoSugestao,
+  ToolSaude,
   ConformidadeResultado,
   Documento,
   DocumentoInput,
@@ -199,6 +202,7 @@ export const api = {
     request('/registry/tools', { method: 'POST', body: input }),
   updateTool: (toolId: string, input: ToolUpdateInput): Promise<Tool> =>
     request(`/registry/tools/${toolId}`, { method: 'PATCH', body: input }),
+  toolSaude: (toolId: string): Promise<ToolSaude> => request(`/registry/tools/${toolId}/saude`),
   getToolFicha: (toolId: string): Promise<ToolFicha> =>
     request(`/registry/tools/${toolId}/ficha`),
 
@@ -274,6 +278,9 @@ export const api = {
     gateId: string,
   ): Promise<{ gate_id: string; veredito: string; explicacao: string }> =>
     request(`/ia/explicar-gate/${gateId}`),
+  sugerirRisco: (texto: string): Promise<RiscoSugestao> =>
+    request('/ia/sugerir-risco', { method: 'POST', body: { texto } }),
+  briefingReuniao: (): Promise<BriefingReuniao> => request('/ia/briefing-reuniao'),
 
   // Iniciativas do GEX-IA (Painel)
   listIniciativas: (params?: {

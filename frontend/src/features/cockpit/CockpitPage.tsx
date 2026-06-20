@@ -7,8 +7,18 @@
 
 import { type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 import { useCockpit, useRegistrarRevisao } from '../../lib/queries';
-import { Badge, Card, EmptyState, ErrorAlert, Loading, PageHeader } from '../../components/ui';
+import { api } from '../../lib/api';
+import {
+  Badge,
+  Card,
+  EmptyState,
+  ErrorAlert,
+  Loading,
+  Markdown,
+  PageHeader,
+} from '../../components/ui';
 
 function proximaRevisaoISO(): string {
   const d = new Date();
@@ -52,6 +62,7 @@ const liStyle = {
 export function CockpitPage(): ReactNode {
   const { data, isLoading, isError, error } = useCockpit();
   const registrar = useRegistrarRevisao();
+  const briefing = useMutation({ mutationFn: () => api.briefingReuniao() });
 
   if (isLoading) return <Loading label="Carregando pendências…" />;
   if (isError) return <ErrorAlert error={error} />;
@@ -65,7 +76,36 @@ export function CockpitPage(): ReactNode {
       <PageHeader
         title="Cockpit de pendências"
         description="O que pede ação do comitê: gates a homologar, revisões a vencer, RIPD/AIA pendente, incidentes, comentários e prazos."
+        actions={
+          <button
+            type="button"
+            className="gd-btn gd-btn--secondary gd-btn--sm"
+            onClick={() => briefing.mutate()}
+            disabled={briefing.isPending}
+          >
+            {briefing.isPending ? 'Gerando…' : 'Gerar pauta da reunião (IA)'}
+          </button>
+        }
       />
+
+      {briefing.isPending && <Loading label="Montando a pauta… (pode levar até 30s)" />}
+      {briefing.isError && <ErrorAlert error={briefing.error} />}
+      {briefing.data && (
+        <Card title="Pauta da reunião (IA)">
+          <div className="gd-md--panel">
+            <Markdown text={briefing.data.pauta} />
+          </div>
+          <p
+            style={{
+              fontSize: 'var(--gd-font-size-xs)',
+              color: 'var(--gd-color-text-muted)',
+              marginBottom: 0,
+            }}
+          >
+            Pauta gerada por IA a partir do estado atual — revise antes de usar.
+          </p>
+        </Card>
+      )}
 
       <div className="gd-form-grid" style={{ marginBottom: 'var(--gd-space-4)' }}>
         <KpiMini label="Gates a homologar" valor={c.gates} tone={false} />

@@ -41,6 +41,14 @@ def update_tool(tool_id: str, body: schemas.ToolUpdate, ctx: Ctx = Depends(get_c
     return service.update_tool(ctx.conn, tool_id, body)
 
 
+@router.get("/tools/{tool_id}/saude")
+def tool_saude(tool_id: str, ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
+    saude = service.tool_saude(ctx.conn, tool_id)
+    if saude is None:
+        raise HTTPException(404, "Ferramenta não encontrada")
+    return saude
+
+
 @router.get("/tools/{tool_id}/ficha")
 def get_ficha(tool_id: str, ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
     ficha = service.get_ficha_tecnica(ctx.conn, tool_id)

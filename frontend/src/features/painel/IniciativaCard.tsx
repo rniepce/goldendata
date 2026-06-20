@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { Badge } from '../../components/ui';
-import { CATEGORIA_META, PRIORIDADE_META, STATUS_META } from '../../lib/options';
+import { CATEGORIA_META, PRIORIDADE_META, STATUS_META, corMembro } from '../../lib/options';
 import type { Iniciativa, IniciativaCategoria } from '../../lib/types';
 
 export function iniciais(nome?: string | null): string {
@@ -53,7 +53,7 @@ export function IniciativaCard({
       />
       <h4 className="painel-card__titulo">{item.titulo}</h4>
       <div className="painel-card__resp">
-        <span className="painel-avatar" style={{ background: cat.cor }}>
+        <span className="painel-avatar" style={{ background: corMembro(item.responsavel_email) }}>
           {iniciais(item.responsavel_nome)}
         </span>
         {item.responsavel_nome ?? 'Sem responsável'}

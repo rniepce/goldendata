@@ -14,6 +14,7 @@ import {
   CATEGORIA_ORDEM,
   STATUS_META,
   STATUS_ORDEM,
+  corMembro,
 } from '../../lib/options';
 import type { Iniciativa } from '../../lib/types';
 import { IniciativaCard, iniciais } from './IniciativaCard';
@@ -105,7 +106,9 @@ export function PainelPage(): ReactNode {
             onClick={() => setFiltroResp((cur) => (cur === r.email ? null : r.email))}
             title={`Ver iniciativas de ${r.nome}`}
           >
-            <span className="painel-avatar">{iniciais(r.nome)}</span>
+            <span className="painel-avatar" style={{ background: corMembro(r.email) }}>
+              {iniciais(r.nome)}
+            </span>
             {r.nome.split(' ')[0]} <span className="painel-chip__count">({r.count})</span>
           </button>
         ))}

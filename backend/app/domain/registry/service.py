@@ -85,6 +85,64 @@ def update_tool(conn: Any, tool_id: str, body: schemas.ToolUpdate) -> dict | Non
     )
 
 
+def tool_saude(conn: Any, tool_id: str) -> dict | None:
+    """Semáforo de saúde da ferramenta (#11): consolida conformidade, KPIs e gate.
+    verde = em dia · âmbar = pendências · vermelho = pendências em produção/alucinação."""
+    from datetime import date
+
+    from app.domain.assistente import conformidade as conf
+
+    ficha = get_ficha_tecnica(conn, tool_id)
+    if ficha is None:
+        return None
+    gates = [
+        r["resultado"]
+        for r in fetch_all(
+            conn,
+            "SELECT pg.resultado::text AS resultado FROM promotion_gate pg "
+            "JOIN tool_version tv ON tv.id = pg.tool_version_id WHERE tv.tool_id = %s",
+            (tool_id,),
+        )
+    ]
+    anexos_tipos = {a.get("tipo") for a in (ficha.get("attachments") or []) if a.get("tipo")}
+    itens = conf.avaliar_conformidade(ficha, gates, anexos_tipos, date.today())
+    pendentes = sum(1 for i in itens if i["status"] == conf.PENDENTE)
+    kpi = fetch_one(
+        conn,
+        "SELECT taxa_aceitacao, taxa_alucinacao FROM kpi_quality "
+        "WHERE tool_id = %s ORDER BY calculado_em DESC LIMIT 1",
+        (tool_id,),
+    )
+    aluc = kpi.get("taxa_alucinacao") if kpi else None
+    alucinacao_alta = aluc is not None and aluc > 0.1
+    em_producao = (ficha["ferramenta"] or {}).get("status_ciclo_vida") == "em_producao"
+    sem_gate = "aprovado" not in gates
+
+    sinais: list[str] = []
+    if alucinacao_alta:
+        sinais.append(f"Taxa de alucinação em {round(aluc * 100)}%")
+    if pendentes:
+        sinais.append(f"{pendentes} pendência(s) de conformidade")
+    if em_producao and sem_gate:
+        sinais.append("Em produção sem gate aprovado")
+
+    if alucinacao_alta or (em_producao and (pendentes or sem_gate)):
+        nivel = "vermelho"
+    elif pendentes:
+        nivel = "ambar"
+    else:
+        nivel = "verde"
+
+    return {
+        "nivel": nivel,
+        "pendencias_conformidade": pendentes,
+        "taxa_aceitacao": kpi.get("taxa_aceitacao") if kpi else None,
+        "taxa_alucinacao": aluc,
+        "em_producao": em_producao,
+        "sinais": sinais,
+    }
+
+
 def get_ficha_tecnica(conn: Any, tool_id: str) -> dict | None:
     """Visão consolidada da ficha técnica: ferramenta + dados + versões + riscos + anexos.
 

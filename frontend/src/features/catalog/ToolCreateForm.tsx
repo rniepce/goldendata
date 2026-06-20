@@ -4,10 +4,13 @@
 
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 import { useCreateTool } from '../../lib/queries';
+import { api } from '../../lib/api';
 import {
   CheckboxField,
   ErrorAlert,
+  InfoAlert,
   SelectField,
   SuccessAlert,
   TextAreaField,
@@ -33,6 +36,14 @@ export function ToolCreateForm({ onCreated }: { onCreated?: () => void }): React
   const [sinapsesId, setSinapsesId] = useState('');
   const [proximaRevisao, setProximaRevisao] = useState('');
   const [vedacoes, setVedacoes] = useState<Record<string, boolean>>({});
+
+  const sugerirRisco = useMutation({
+    mutationFn: () =>
+      api.sugerirRisco([nome, descricao, justificativaRisco].filter((s) => s.trim()).join('\n')),
+    onSuccess: (r) => {
+      if (r.categoria === 'alto' || r.categoria === 'baixo') setRisco(r.categoria);
+    },
+  });
 
   function handleSubmit(event: FormEvent): void {
     event.preventDefault();
@@ -109,6 +120,24 @@ export function ToolCreateForm({ onCreated }: { onCreated?: () => void }): React
         value={justificativaRisco}
         onChange={setJustificativaRisco}
       />
+      <div className="gd-row" style={{ marginBottom: '1rem' }}>
+        <button
+          type="button"
+          className="gd-btn gd-btn--secondary gd-btn--sm"
+          onClick={() => sugerirRisco.mutate()}
+          disabled={sugerirRisco.isPending || !(nome.trim() || descricao.trim())}
+        >
+          {sugerirRisco.isPending ? 'Consultando…' : 'Sugerir risco (IA)'}
+        </button>
+      </div>
+      {sugerirRisco.isError && <ErrorAlert error={sugerirRisco.error} />}
+      {sugerirRisco.data && (
+        <InfoAlert>
+          Sugestão de risco: <strong>{sugerirRisco.data.categoria ?? '—'}</strong>
+          {sugerirRisco.data.justificativa ? ` — ${sugerirRisco.data.justificativa}` : ''}. A
+          classificação final é sua.
+        </InfoAlert>
+      )}
       <TextAreaField
         label="Explicação em linguagem simples"
         value={explicacao}
