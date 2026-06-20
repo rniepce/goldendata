@@ -67,6 +67,8 @@ export interface Iniciativa {
   prazo: string | null;
   criado_em: string;
   atualizado_em: string;
+  /** Comentários não resolvidos (contagem vinda da listagem). */
+  comentarios_abertos?: number;
 }
 
 export interface IniciativaInput {

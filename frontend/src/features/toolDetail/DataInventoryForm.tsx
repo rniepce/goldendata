@@ -99,7 +99,7 @@ export function DataInventoryForm({ toolId }: { toolId: string }): ReactNode {
       <TextField label="Critério de retenção" value={retencao} onChange={setRetencao} />
 
       <fieldset style={{ border: 'none', padding: 0, margin: '0 0 1rem' }}>
-        <legend style={{ fontWeight: 600, fontSize: 'var(--gd-font-size-sm)', marginBottom: '0.5rem' }}>
+        <legend className="gd-legend">
           Classificação de sensibilidade
         </legend>
         <CheckboxField label="Contém dados pessoais" checked={pessoais} onChange={setPessoais} />

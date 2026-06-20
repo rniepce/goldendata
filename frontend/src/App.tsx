@@ -3,23 +3,26 @@
  * Rotas protegidas por sessão OIDC e, quando aplicável, por papéis (RBAC).
  */
 
-import type { ReactNode } from 'react';
+import { lazy, type ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { RequireAuth } from './components/RequireAuth';
 import { CallbackScreen } from './features/auth/CallbackScreen';
-import { PainelPage } from './features/painel/PainelPage';
-import { BuscaPage } from './features/busca/BuscaPage';
-import { CatalogPage } from './features/catalog/CatalogPage';
-import { ToolDetailPage } from './features/toolDetail/ToolDetailPage';
-import { ToolVersionsPage } from './features/toolVersions/ToolVersionsPage';
-import { GoldenDatasetsPage } from './features/goldenDatasets/GoldenDatasetsPage';
-import { EvaluationsPage } from './features/evaluations/EvaluationsPage';
-import { AnnotationPage } from './features/annotation/AnnotationPage';
-import { GatePage } from './features/gate/GatePage';
-import { IndicatorsPage } from './features/indicators/IndicatorsPage';
-import { AuditPage } from './features/audit/AuditPage';
-import { AdminPage } from './features/admin/AdminPage';
+
+// Páginas carregadas sob demanda (code-splitting): cada rota vira um chunk,
+// tirando bibliotecas pesadas (ex.: gráficos dos Indicadores) do bundle inicial.
+const PainelPage = lazy(() => import('./features/painel/PainelPage').then((m) => ({ default: m.PainelPage })));
+const BuscaPage = lazy(() => import('./features/busca/BuscaPage').then((m) => ({ default: m.BuscaPage })));
+const CatalogPage = lazy(() => import('./features/catalog/CatalogPage').then((m) => ({ default: m.CatalogPage })));
+const ToolDetailPage = lazy(() => import('./features/toolDetail/ToolDetailPage').then((m) => ({ default: m.ToolDetailPage })));
+const ToolVersionsPage = lazy(() => import('./features/toolVersions/ToolVersionsPage').then((m) => ({ default: m.ToolVersionsPage })));
+const GoldenDatasetsPage = lazy(() => import('./features/goldenDatasets/GoldenDatasetsPage').then((m) => ({ default: m.GoldenDatasetsPage })));
+const EvaluationsPage = lazy(() => import('./features/evaluations/EvaluationsPage').then((m) => ({ default: m.EvaluationsPage })));
+const AnnotationPage = lazy(() => import('./features/annotation/AnnotationPage').then((m) => ({ default: m.AnnotationPage })));
+const GatePage = lazy(() => import('./features/gate/GatePage').then((m) => ({ default: m.GatePage })));
+const IndicatorsPage = lazy(() => import('./features/indicators/IndicatorsPage').then((m) => ({ default: m.IndicatorsPage })));
+const AuditPage = lazy(() => import('./features/audit/AuditPage').then((m) => ({ default: m.AuditPage })));
+const AdminPage = lazy(() => import('./features/admin/AdminPage').then((m) => ({ default: m.AdminPage })));
 
 export function App(): ReactNode {
   return (

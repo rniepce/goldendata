@@ -54,7 +54,7 @@ export function BuscaPage(): ReactNode {
                     <Link to={h.link} style={{ fontWeight: 600 }}>{h.titulo}</Link>{' '}
                     <Badge tone="neutral">{h.tipo}</Badge>
                     {h.subtitulo && (
-                      <div style={{ fontSize: 'var(--gd-font-size-sm)', color: 'var(--gd-color-text-muted)' }}>
+                      <div className="gd-meta__value" style={{ color: 'var(--gd-color-text-muted)' }}>
                         {h.subtitulo}
                       </div>
                     )}
@@ -96,11 +96,16 @@ export function BuscaPage(): ReactNode {
               </p>
             </div>
           )}
-          {qa.data && (
-            <div className="gd-md--panel" style={{ marginTop: 'var(--gd-space-4)' }}>
-              <Markdown text={qa.data.resposta} />
-            </div>
-          )}
+          {qa.data &&
+            (qa.data.resposta?.trim() ? (
+              <div className="gd-md--panel" style={{ marginTop: 'var(--gd-space-4)' }}>
+                <Markdown text={qa.data.resposta} />
+              </div>
+            ) : (
+              <p className="gd-empty" style={{ marginTop: 'var(--gd-space-4)' }}>
+                O assistente não retornou conteúdo. Tente reformular a pergunta.
+              </p>
+            ))}
         </Card>
       </div>
     </>

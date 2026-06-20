@@ -361,6 +361,13 @@ p { margin: 0 0 var(--gd-space-3); }
 }
 .gd-checkbox-row label { font-weight: 400; font-size: var(--gd-font-size-sm); }
 
+.gd-legend {
+  font-weight: 600;
+  font-size: var(--gd-font-size-sm);
+  margin-bottom: var(--gd-space-2);
+  color: var(--gd-color-text);
+}
+
 /* Tabela densa para governança */
 .gd-table {
   width: 100%;
@@ -570,4 +577,12 @@ p { margin: 0 0 var(--gd-space-3); }
 
 @media (prefers-reduced-motion: reduce) {
   .gd-sidebar { transition: none; }
+}
+
+/* Cabeçalho em telas estreitas: esconde o rótulo secundário e reduz o respiro */
+@media (max-width: 600px) {
+  .gd-header .gd-mono { display: none; }
+}
+@media (max-width: 480px) {
+  .gd-header { padding: 0 var(--gd-space-3); }
 }

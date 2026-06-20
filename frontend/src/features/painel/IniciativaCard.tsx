@@ -68,6 +68,11 @@ export function IniciativaCard({
           {prazo.texto}
         </div>
       )}
+      {!!item.comentarios_abertos && (
+        <div className="painel-card__coment" title={`${item.comentarios_abertos} comentário(s) em aberto`}>
+          💬 {item.comentarios_abertos} comentário{item.comentarios_abertos > 1 ? 's' : ''}
+        </div>
+      )}
       {item.resumo && <div className="painel-card__resumo">{item.resumo}</div>}
     </button>
   );

@@ -3,8 +3,9 @@
  * do usuário e papéis, e indicador de ambiente (dev/homolog/prod).
  */
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useState, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { Loading } from './ui';
 import { useAuth, hasAnyRole } from '../lib/auth-oidc';
 import { env } from '../lib/env';
 import type { Role } from '../lib/types';
@@ -139,7 +140,9 @@ export function Layout(): ReactNode {
       </nav>
 
       <main id="conteudo-principal" className="gd-main" tabIndex={-1}>
-        <Outlet />
+        <Suspense fallback={<Loading label="Carregando…" />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );

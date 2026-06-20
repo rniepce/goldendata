@@ -19,7 +19,11 @@ def list_iniciativas(
     status: str | None = None,
     responsavel: str | None = None,
 ) -> list[dict]:
-    sql = "SELECT * FROM iniciativa"
+    sql = (
+        "SELECT i.*, (SELECT count(*) FROM comentario c "
+        "WHERE c.iniciativa_id = i.id AND NOT c.resolvido) AS comentarios_abertos "
+        "FROM iniciativa i"
+    )
     where: list[str] = []
     params: list[Any] = []
     if categoria:

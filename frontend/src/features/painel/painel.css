@@ -52,8 +52,8 @@
   box-shadow: 0 0 0 1px var(--gd-color-primary);
 }
 .painel-avatar {
-  width: 26px;
-  height: 26px;
+  width: var(--painel-avatar-size, 26px);
+  height: var(--painel-avatar-size, 26px);
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -207,6 +207,30 @@
   margin-top: 0.5rem;
 }
 .painel-card__prazo--vencido { color: var(--gd-color-danger); font-weight: 600; }
+.painel-card__coment {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--gd-font-size-xs);
+  color: var(--gd-color-text-muted);
+  margin-top: var(--gd-space-2);
+}
+
+/* Discussão (comentários por iniciativa) — antes estilizado inline no componente */
+.painel-coment { margin-top: var(--gd-space-5); border-top: 1px solid var(--gd-color-border); padding-top: var(--gd-space-4); }
+.painel-coment__h { font-size: var(--gd-font-size-base); margin: 0 0 var(--gd-space-2); }
+.painel-coment__vazio { color: var(--gd-color-text-muted); font-size: var(--gd-font-size-sm); }
+.painel-coment__item { display: flex; gap: var(--gd-space-3); padding: var(--gd-space-3) 0; border-bottom: 1px solid var(--gd-color-border); }
+.painel-coment__item--resolvido { opacity: 0.6; }
+.painel-coment__body { flex: 1; min-width: 0; }
+.painel-coment__meta { font-size: var(--gd-font-size-sm); color: var(--gd-color-text-muted); }
+.painel-coment__meta strong { color: var(--gd-color-text); }
+.painel-coment__texto { white-space: pre-wrap; font-size: var(--gd-font-size-base); margin-top: var(--gd-space-1); }
+.painel-coment__anexo { font-size: var(--gd-font-size-sm); }
+.painel-coment__acoes { display: flex; gap: var(--gd-space-2); margin-top: var(--gd-space-1); }
+.painel-coment__form { margin-top: var(--gd-space-3); }
+.painel-coment__envio { display: flex; gap: var(--gd-space-2); margin-top: var(--gd-space-2); align-items: center; flex-wrap: wrap; }
+.painel-coment__anexos { margin-top: var(--gd-space-2); }
 
 /* Form de edição dentro do drawer */
 .painel-drawer .gd-form-grid { gap: var(--gd-space-2); }

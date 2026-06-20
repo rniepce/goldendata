@@ -83,7 +83,7 @@ export function IniciativaDrawer({
       <aside className="painel-drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Detalhes da iniciativa">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '1rem' }}>
           <h2 style={{ margin: 0, fontSize: 'var(--gd-font-size-lg)' }}>{item.titulo}</h2>
-          <button className="painel-drawer__close" onClick={onClose} aria-label="Fechar">
+          <button type="button" className="painel-drawer__close" onClick={onClose} aria-label="Fechar">
             ×
           </button>
         </div>

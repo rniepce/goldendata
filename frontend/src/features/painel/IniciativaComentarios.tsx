@@ -44,33 +44,22 @@ export function IniciativaComentarios({ iniciativaId }: { iniciativaId: string }
   const podeModerar = hasAnyRole(user, 'coordenador_comite', 'admin');
 
   return (
-    <div style={{ marginTop: '1.25rem', borderTop: '1px solid var(--gd-color-border)', paddingTop: '1rem' }}>
-      <h3 style={{ fontSize: '0.95rem', marginTop: 0 }}>Discussão</h3>
+    <div className="painel-coment">
+      <h3 className="painel-coment__h">Discussão</h3>
 
       {isLoading && <Loading label="Carregando comentários…" />}
       {isError && <ErrorAlert error={error} />}
 
       {data && data.length === 0 && (
-        <p style={{ color: 'var(--gd-color-text-muted)', fontSize: 'var(--gd-font-size-sm)' }}>
-          Nenhum comentário ainda. Inicie a discussão abaixo.
-        </p>
+        <p className="painel-coment__vazio">Nenhum comentário ainda. Inicie a discussão abaixo.</p>
       )}
 
       {data?.map((c) => (
-        <div
-          key={c.id}
-          style={{
-            display: 'flex',
-            gap: '0.6rem',
-            padding: '0.6rem 0',
-            borderBottom: '1px solid var(--gd-color-border)',
-            opacity: c.resolvido ? 0.6 : 1,
-          }}
-        >
-          <span className="painel-avatar" style={{ flex: '0 0 auto' }}>{iniciais(c.autor_nome)}</span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '0.8rem', color: 'var(--gd-color-text-muted)' }}>
-              <strong style={{ color: 'var(--gd-color-text)' }}>{c.autor_nome ?? 'Usuário'}</strong>{' '}
+        <div key={c.id} className={`painel-coment__item${c.resolvido ? ' painel-coment__item--resolvido' : ''}`}>
+          <span className="painel-avatar">{iniciais(c.autor_nome)}</span>
+          <div className="painel-coment__body">
+            <div className="painel-coment__meta">
+              <strong>{c.autor_nome ?? 'Usuário'}</strong>{' '}
               · {new Date(c.criado_em).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
               {c.resolvido && (
                 <>
@@ -79,13 +68,13 @@ export function IniciativaComentarios({ iniciativaId }: { iniciativaId: string }
                 </>
               )}
             </div>
-            <div style={{ whiteSpace: 'pre-wrap', fontSize: '0.9rem', marginTop: '0.15rem' }}>{c.texto}</div>
+            <div className="painel-coment__texto">{c.texto}</div>
             {c.anexo_url && (
-              <a href={c.anexo_url} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem' }}>
+              <a className="painel-coment__anexo" href={c.anexo_url} target="_blank" rel="noreferrer">
                 📎 {c.anexo_titulo || c.anexo_url}
               </a>
             )}
-            <div style={{ display: 'flex', gap: 'var(--gd-space-2)', marginTop: 'var(--gd-space-1)' }}>
+            <div className="painel-coment__acoes">
               <button
                 type="button"
                 className="gd-btn gd-btn--text"
@@ -107,7 +96,7 @@ export function IniciativaComentarios({ iniciativaId }: { iniciativaId: string }
         </div>
       ))}
 
-      <form onSubmit={onSubmit} style={{ marginTop: '0.8rem' }}>
+      <form className="painel-coment__form" onSubmit={onSubmit}>
         {add.isError && <ErrorAlert error={add.error} />}
         <textarea
           className="gd-textarea"
@@ -116,15 +105,14 @@ export function IniciativaComentarios({ iniciativaId }: { iniciativaId: string }
           aria-label="Conteúdo do comentário"
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
-          style={{ width: '100%' }}
         />
         {anexoOpen && (
-          <div className="gd-form-grid" style={{ marginTop: '0.4rem' }}>
+          <div className="gd-form-grid painel-coment__anexos">
             <input className="gd-input" aria-label="URL do anexo (link do SEI ou documento)" placeholder="Link (URL do SEI/documento)" value={anexoUrl} onChange={(e) => setAnexoUrl(e.target.value)} />
             <input className="gd-input" aria-label="Título do anexo" placeholder="Título do anexo" value={anexoTitulo} onChange={(e) => setAnexoTitulo(e.target.value)} />
           </div>
         )}
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem', alignItems: 'center' }}>
+        <div className="painel-coment__envio">
           <button type="submit" className="gd-btn gd-btn--sm" disabled={add.isPending || !texto.trim()}>
             {add.isPending ? 'Enviando…' : 'Comentar'}
           </button>
