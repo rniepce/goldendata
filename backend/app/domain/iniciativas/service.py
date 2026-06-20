@@ -37,7 +37,8 @@ def list_iniciativas(
         params.append(responsavel)
     if where:
         sql += " WHERE " + " AND ".join(where)
-    sql += " ORDER BY atualizado_em DESC"
+    # Teto de segurança contra leitura não-limitada (o painel agrupa <500 itens).
+    sql += " ORDER BY atualizado_em DESC LIMIT 500"
     return fetch_all(conn, sql, tuple(params))
 
 

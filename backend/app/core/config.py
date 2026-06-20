@@ -104,6 +104,12 @@ class Settings(BaseSettings):
                     "GOLDENDATA_AUTH_MODE=none (acesso sem login) é proibido fora de dev "
                     f"(environment={self.environment})."
                 )
+        # OAuth do MCP sem segredo HS256 aceitaria tokens não verificados.
+        if self.mcp_oauth_enabled and not self.mcp_oauth_jwt_secret.strip():
+            raise ValueError(
+                "GOLDENDATA_MCP_OAUTH_ENABLED=true exige GOLDENDATA_MCP_OAUTH_JWT_SECRET "
+                "(gere com: openssl rand -hex 32)."
+            )
         return self
 
 

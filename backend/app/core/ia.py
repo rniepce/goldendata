@@ -7,9 +7,13 @@ não decide. Sem chave configurada, levanta RuntimeError (o router responde 503)
 """
 from __future__ import annotations
 
+import logging
+
 import httpx
 
 from app.core.config import settings
+
+log = logging.getLogger("goldendata.ia")
 
 
 def disponivel() -> bool:
@@ -39,11 +43,14 @@ def chamar(system: str, user: str, max_tokens: int | None = None) -> str:
         timeout=90,
     )
     if r.status_code >= 400:
-        raise ValueError(f"Falha na IA ({r.status_code}): {r.text[:200]}")
+        # Detalhe (que pode conter dados do provedor) só no log do servidor.
+        log.warning("IA respondeu %s: %s", r.status_code, r.text[:500])
+        raise ValueError(f"O serviço de IA respondeu com erro ({r.status_code}). Tente novamente.")
     data = r.json()
     try:
         msg = data["choices"][0]["message"]
     except (KeyError, IndexError) as exc:
-        raise ValueError(f"Resposta inesperada da IA: {str(data)[:200]}") from exc
+        log.warning("Resposta inesperada da IA: %s", str(data)[:500])
+        raise ValueError("O serviço de IA retornou uma resposta inesperada.") from exc
     # modelos de reasoning podem separar conteúdo final de reasoning_content
     return (msg.get("content") or msg.get("reasoning_content") or "").strip()

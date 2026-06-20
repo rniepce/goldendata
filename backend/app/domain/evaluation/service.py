@@ -69,9 +69,16 @@ def import_outputs(conn: Any, run_id: str, body: schemas.OutputImport) -> dict:
     if run is None:
         raise ValueError("eval_run inexistente")
 
+    # Pré-carrega todos os golden_cases em 1 query (evita N+1 no loop de importação).
+    ids = [item.golden_case_id for item in body.outputs]
+    casos = {
+        str(c["id"]): c
+        for c in fetch_all(conn, "SELECT * FROM golden_case WHERE id = ANY(%s)", (ids,))
+    }
+
     scored = []
     for item in body.outputs:
-        case = fetch_one(conn, "SELECT * FROM golden_case WHERE id = %s", (item.golden_case_id,))
+        case = casos.get(str(item.golden_case_id))
         if case is None:
             raise ValueError(f"golden_case inexistente: {item.golden_case_id}")
 

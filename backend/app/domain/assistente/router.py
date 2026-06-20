@@ -107,14 +107,17 @@ class Pergunta(BaseModel):
 
 @router.post("/ia/perguntar")
 def perguntar(body: Pergunta, ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
+    # Limites de contexto: protege custo/limite de token da IA conforme o acervo cresce.
     tools = fetch_all(
         ctx.conn,
         """SELECT codigo_institucional, nome, unidade_responsavel, categoria_risco,
-                  categoria_risco_cnj, estagio_gexia, descricao FROM tool ORDER BY codigo_institucional""",
+                  categoria_risco_cnj, estagio_gexia, descricao FROM tool
+           ORDER BY codigo_institucional LIMIT 40""",
     )
     inics = fetch_all(
         ctx.conn,
-        "SELECT titulo, categoria, status, responsavel_nome, prazo FROM iniciativa ORDER BY atualizado_em DESC",
+        "SELECT titulo, categoria, status, responsavel_nome, prazo FROM iniciativa "
+        "ORDER BY atualizado_em DESC LIMIT 30",
     )
     ctx_tools = "\n".join(
         f"- [{t['codigo_institucional']}] {t['nome']} · unidade {t['unidade_responsavel']} · "
