@@ -115,6 +115,108 @@ export interface SearchResult {
   resultados: SearchHit[];
 }
 
+// ---------- Base de conhecimento (corpus do RAG) ----------
+export type DocumentoTipo = 'skill' | 'norma' | 'diretriz' | 'modelo_resposta' | 'outro';
+
+export interface Documento {
+  id: string;
+  titulo: string;
+  tipo: DocumentoTipo;
+  /** Presente em getDocumento; ausente na listagem (payload enxuto). */
+  conteudo?: string;
+  fonte: string | null;
+  tags: string[];
+  ativo: boolean;
+  criado_por_sub: string | null;
+  criado_em: string;
+  atualizado_em: string;
+  /** Nº de chunks indexados (vem da listagem e do get). */
+  n_chunks?: number;
+}
+
+export interface DocumentoInput {
+  titulo: string;
+  tipo?: DocumentoTipo;
+  conteudo: string;
+  fonte?: string | null;
+  tags?: string[];
+  ativo?: boolean;
+}
+
+// ---------- Assistente / copiloto (RAG) ----------
+export interface FonteRag {
+  documento_id: string;
+  titulo: string;
+  tipo: DocumentoTipo;
+}
+
+export interface ChatTurno {
+  papel: 'user' | 'assistant';
+  texto: string;
+}
+
+export interface ChatResposta {
+  resposta: string;
+  fontes: FonteRag[];
+}
+
+// ---------- Assistente de conformidade (#24) ----------
+export type ConformidadeStatus = 'ok' | 'pendente' | 'na';
+
+export interface ConformidadeItem {
+  requisito: string;
+  status: ConformidadeStatus;
+  detalhe: string;
+  base: string;
+}
+
+export interface ConformidadeResultado {
+  tool_id: string;
+  itens: ConformidadeItem[];
+  total: number;
+  ok: number;
+  pendentes: number;
+  na: number;
+  resumo_ia?: string;
+}
+
+// ---------- Ingestão de documento / SEI (#76, #77) ----------
+export interface RedacaoSei {
+  minuta: string;
+  fontes: FonteRag[];
+}
+
+export interface CardSugestao {
+  titulo?: string;
+  resumo?: string;
+  categoria?: string;
+  risco_sugerido?: string;
+  processo_sei?: string;
+}
+
+export interface ExtracaoCard {
+  sugestao: CardSugestao;
+  /** Texto bruto da IA quando o JSON não pôde ser estruturado. */
+  bruto: string | null;
+}
+
+// ---------- Plano pessoal do membro (#75) ----------
+export type PlanoUrgencia = 'atrasada' | 'prazo' | 'normal';
+
+export interface PlanoItem {
+  tipo: string;
+  titulo: string;
+  link: string;
+  prazo: string | null;
+  urgencia: PlanoUrgencia;
+}
+
+export interface PlanoPessoal {
+  membro: string;
+  itens: PlanoItem[];
+  resumo_ia?: string;
+}
+
 // ---------- Registro (3.2) ----------
 export type Hospedagem = 'api_externa' | 'on_premise' | 'nuvem_homologada';
 

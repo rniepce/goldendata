@@ -6,16 +6,19 @@ o humano no loop — sugere/resume, não decide.
 """
 from __future__ import annotations
 
-from typing import Any
+from datetime import date
+from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
-from app.core import ia
+from app.core import doctext, ia, rag
 from app.core.db import fetch_all
 from app.core.deps import Ctx, get_ctx
 from app.core.security_keycloak import require_role
 from app.domain.registry import service as registry_svc
+
+from . import conformidade
 
 router = APIRouter(tags=["assistente"])
 
@@ -144,6 +147,261 @@ def perguntar(body: Pergunta, ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
     except ValueError as exc:
         raise HTTPException(502, str(exc)) from exc
     return {"resposta": resposta}
+
+
+# ---------------- IA: copiloto-chat com RAG (#74) ----------------
+def _acervo_contexto(conn: Any) -> tuple[str, str]:
+    """Contexto compacto do acervo (ferramentas + iniciativas) para aterrar a IA."""
+    tools = fetch_all(
+        conn,
+        """SELECT codigo_institucional, nome, unidade_responsavel, categoria_risco,
+                  categoria_risco_cnj, estagio_gexia, descricao FROM tool
+           ORDER BY codigo_institucional LIMIT 40""",
+    )
+    inics = fetch_all(
+        conn,
+        "SELECT titulo, categoria, status, responsavel_nome, prazo FROM iniciativa "
+        "ORDER BY atualizado_em DESC LIMIT 30",
+    )
+    ctx_tools = "\n".join(
+        f"- [{t['codigo_institucional']}] {t['nome']} · unidade {t['unidade_responsavel']} · "
+        f"risco {t.get('categoria_risco') or '—'} (CNJ {t.get('categoria_risco_cnj') or '—'}) · "
+        f"estágio {t.get('estagio_gexia')} · {(t.get('descricao') or '')[:160]}"
+        for t in tools
+    )
+    ctx_inic = "\n".join(
+        f"- {i['titulo']} · {i['categoria']} · {i['status']} · "
+        f"resp {i.get('responsavel_nome')} · prazo {i.get('prazo')}"
+        for i in inics
+    )
+    return ctx_tools, ctx_inic
+
+
+class ChatTurno(BaseModel):
+    papel: Literal["user", "assistant"]
+    texto: str = Field(min_length=1, max_length=4000)
+
+
+class ChatPergunta(BaseModel):
+    pergunta: str = Field(min_length=2)
+    historico: list[ChatTurno] = Field(default_factory=list)
+
+
+@router.post("/ia/chat")
+def chat(body: ChatPergunta, ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
+    # RAG: trechos citáveis da base de conhecimento institucional + acervo aterrado.
+    chunks = rag.retrieve(ctx.conn, body.pergunta, k=6)
+    contexto_docs, fontes = rag.build_context(chunks)
+    ctx_tools, ctx_inic = _acervo_contexto(ctx.conn)
+
+    system = (
+        "Você é o copiloto do GEX-IA (governança de IA do TJMG). Responda à pergunta com base "
+        "no CONHECIMENTO INSTITUCIONAL (documentos numerados, citáveis por [n]) e no ACERVO "
+        "(ferramentas e iniciativas). Cite as fontes do conhecimento pelo índice [n] quando as "
+        "usar. Se a informação não estiver no contexto, diga claramente que não há essa "
+        "informação na base. Seja conciso e objetivo, em português. " + _CNJ_RISCO
+    )
+    partes: list[str] = []
+    if contexto_docs:
+        partes.append(f"CONHECIMENTO INSTITUCIONAL (cite por [n]):\n{contexto_docs}")
+    partes.append(f"ACERVO — FERRAMENTAS:\n{ctx_tools or '(vazio)'}")
+    partes.append(f"ACERVO — INICIATIVAS:\n{ctx_inic or '(vazio)'}")
+    if body.historico:
+        # Teto de turnos para limitar custo/token; o histórico vem do cliente.
+        recente = body.historico[-6:]
+        transcript = "\n".join(
+            f"{'Usuário' if t.papel == 'user' else 'Assistente'}: {t.texto}" for t in recente
+        )
+        partes.append(f"CONVERSA ANTERIOR:\n{transcript}")
+    partes.append(f"PERGUNTA: {body.pergunta}")
+    user = "\n\n".join(partes)
+
+    try:
+        resposta = ia.chamar(system, user, max_tokens=1000)
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    return {"resposta": resposta, "fontes": fontes}
+
+
+# ---------------- IA: assistente de conformidade (#24) ----------------
+@router.get("/ia/conformidade/{tool_id}")
+def conformidade_ferramenta(tool_id: str, ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
+    ficha = registry_svc.get_ficha_tecnica(ctx.conn, tool_id)
+    if ficha is None:
+        raise HTTPException(404, "Ferramenta não encontrada")
+    gates = [
+        r["resultado"]
+        for r in fetch_all(
+            ctx.conn,
+            "SELECT pg.resultado::text AS resultado FROM promotion_gate pg "
+            "JOIN tool_version tv ON tv.id = pg.tool_version_id WHERE tv.tool_id = %s",
+            (tool_id,),
+        )
+    ]
+    anexos_tipos = {a.get("tipo") for a in (ficha.get("attachments") or []) if a.get("tipo")}
+    itens = conformidade.avaliar_conformidade(ficha, gates, anexos_tipos, date.today())
+    pendentes = [i for i in itens if i["status"] == conformidade.PENDENTE]
+    resultado: dict[str, Any] = {
+        "tool_id": tool_id,
+        "itens": itens,
+        "total": len(itens),
+        "ok": sum(1 for i in itens if i["status"] == conformidade.OK),
+        "pendentes": len(pendentes),
+        "na": sum(1 for i in itens if i["status"] == conformidade.NA),
+    }
+    # Narração opcional (best-effort): a IA só verbaliza o checklist determinístico.
+    if ia.disponivel() and pendentes:
+        f = ficha["ferramenta"]
+        lista = "\n".join(f"- {i['requisito']}: {i['detalhe']} ({i['base']})" for i in pendentes)
+        system = (
+            "Você é analista de governança de IA do TJMG. Em 3-5 linhas, resuma de forma "
+            "objetiva e acionável o que falta para a ferramenta ficar conforme. Não invente "
+            "requisitos além dos listados. " + _CNJ_RISCO
+        )
+        user = f"Ferramenta: {f.get('nome')} ({f.get('codigo_institucional')}).\nPendências:\n{lista}"
+        try:
+            resultado["resumo_ia"] = ia.chamar(system, user, max_tokens=400)
+        except (RuntimeError, ValueError):
+            pass  # narração é opcional; o veredito é o checklist
+    return resultado
+
+
+# ---------------- IA: ingestão de documento (SEI) — #76 e #77 ----------------
+_EDIT_DOC = require_role("owner_ferramenta", "coordenador_comite", "admin")
+
+
+def _entrada_documento(texto: str | None, file: UploadFile | None) -> str:
+    """Texto do documento: do arquivo enviado (PDF/DOCX/TXT) ou do campo colado."""
+    if file is not None and file.filename:
+        try:
+            conteudo = doctext.extrair_texto(file.filename, file.file.read())
+        except RuntimeError as exc:
+            raise HTTPException(415, str(exc)) from exc
+        if conteudo.strip():
+            return conteudo
+    if texto and texto.strip():
+        return texto.strip()
+    raise HTTPException(400, "Forneça o texto do processo ou envie um arquivo legível.")
+
+
+@router.post("/ia/redigir-resposta-sei")
+def redigir_resposta_sei(
+    texto: str | None = Form(None),
+    file: UploadFile | None = File(None),
+    ctx: Ctx = Depends(get_ctx),
+    _=Depends(_EDIT_DOC),
+):
+    conteudo = _entrada_documento(texto, file)
+    # RAG nas diretrizes/normas/modelos internos (a base de conhecimento).
+    chunks = rag.retrieve(
+        ctx.conn, conteudo[:2000], k=8, tipos=["diretriz", "norma", "modelo_resposta"]
+    )
+    contexto_docs, fontes = rag.build_context(chunks)
+    system = (
+        "Você é assessor do GEX-IA (TJMG). Redija uma MINUTA de resposta ao documento/processo "
+        "informado, fundamentada SOMENTE nas diretrizes internas fornecidas, citando-as por [n] "
+        "onde embasarem. Linguagem formal institucional. NÃO invente normas; se faltar base, "
+        "marque [a confirmar]. A revisão humana do resultado é obrigatória. " + _CNJ_RISCO
+    )
+    user = (
+        f"DIRETRIZES INTERNAS (cite por [n]):\n{contexto_docs or '(nenhuma diretriz indexada)'}\n\n"
+        f"DOCUMENTO/PROCESSO:\n{conteudo[:6000]}\n\nProduza a minuta de resposta."
+    )
+    try:
+        minuta = ia.chamar(system, user, max_tokens=1400)
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    return {"minuta": minuta, "fontes": fontes}
+
+
+@router.post("/ia/extrair-card")
+def extrair_card(
+    texto: str | None = Form(None),
+    file: UploadFile | None = File(None),
+    ctx: Ctx = Depends(get_ctx),
+    _=Depends(_EDIT_DOC),
+):
+    conteudo = _entrada_documento(texto, file)
+    system = (
+        "Você extrai metadados para abrir uma iniciativa de governança de IA do GEX-IA. A partir "
+        "do documento, responda APENAS um objeto JSON com as chaves: titulo (curto), resumo (2-3 "
+        "linhas), categoria (uma de: solucao_ia, educacional, suporte, governanca_normativo, "
+        "cooperacao, pesquisa_prospeccao), risco_sugerido (alto|baixo|indefinido) e processo_sei "
+        "(se houver). Não invente o que não estiver no documento. " + _CNJ_RISCO
+    )
+    try:
+        bruto = ia.chamar(system, f"DOCUMENTO:\n{conteudo[:6000]}", max_tokens=500)
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    sugestao = doctext.parse_primeiro_json(bruto)
+    return {"sugestao": sugestao, "bruto": None if sugestao else bruto}
+
+
+# ---------------- IA: plano pessoal do membro (#75) ----------------
+@router.get("/ia/plano-pessoal")
+def plano_pessoal(ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
+    hoje = date.today()
+    inics = fetch_all(
+        ctx.conn,
+        "SELECT id, titulo, status, prioridade, prazo FROM iniciativa "
+        "WHERE responsavel_email = %s AND status NOT IN ('concluido','cancelado') "
+        "ORDER BY (prazo IS NULL), prazo LIMIT 50",
+        (ctx.user.email,),
+    )
+    revisoes = fetch_all(
+        ctx.conn,
+        "SELECT id, codigo_institucional, nome, proxima_revisao_em FROM tool "
+        "WHERE owner_sub = %s AND proxima_revisao_em IS NOT NULL "
+        "AND proxima_revisao_em <= (current_date + INTERVAL '30 days') "
+        "ORDER BY proxima_revisao_em LIMIT 50",
+        (ctx.user.sub,),
+    )
+    itens: list[dict[str, Any]] = []
+    for i in inics:
+        prazo = i.get("prazo")
+        atrasada = prazo is not None and prazo < hoje
+        itens.append(
+            {
+                "tipo": "iniciativa",
+                "titulo": i["titulo"],
+                "link": "/painel",
+                "prazo": prazo.isoformat() if prazo else None,
+                "urgencia": "atrasada" if atrasada else ("prazo" if prazo else "normal"),
+            }
+        )
+    for t in revisoes:
+        venc = t["proxima_revisao_em"]
+        itens.append(
+            {
+                "tipo": "revisao",
+                "titulo": f"Revisar {t['nome']} ({t['codigo_institucional']})",
+                "link": f"/ferramentas/{t['id']}",
+                "prazo": venc.isoformat(),
+                "urgencia": "atrasada" if venc < hoje else "prazo",
+            }
+        )
+    resultado: dict[str, Any] = {"membro": ctx.user.nome, "itens": itens}
+    if ia.disponivel() and itens:
+        lista = "\n".join(
+            f"- [{x['tipo']}] {x['titulo']} (prazo {x['prazo'] or '—'}, {x['urgencia']})"
+            for x in itens
+        )
+        system = (
+            "Você é assistente de produtividade do GEX-IA. Organize as pendências do membro em "
+            "'Hoje' (urgentes/atrasadas) e 'Esta semana', em tópicos curtos e acionáveis, em "
+            "português. Não invente itens além dos listados. " + _CNJ_RISCO
+        )
+        try:
+            resultado["resumo_ia"] = ia.chamar(system, f"Pendências:\n{lista}", max_tokens=500)
+        except (RuntimeError, ValueError):
+            pass
+    return resultado
 
 
 @router.get("/ia/disponivel")

@@ -8,6 +8,7 @@ import { api } from './api';
 import type {
   AnnotationInput,
   DataInventoryInput,
+  DocumentoInput,
   EvalOutputInput,
   GateInput,
   GateDecisionInput,
@@ -37,7 +38,61 @@ export const queryKeys = {
   iniciativas: ['iniciativas'] as const,
   iniciativa: (id: string) => ['iniciativa', id] as const,
   comentarios: (id: string) => ['comentarios', id] as const,
+  documentos: (tipo?: string, q?: string) => ['documentos', tipo ?? '', q ?? ''] as const,
+  documento: (id: string) => ['documento', id] as const,
 };
+
+// ---------- Base de conhecimento (RAG) ----------
+export function useDocumentos(params?: { tipo?: string; q?: string }) {
+  return useQuery({
+    queryKey: queryKeys.documentos(params?.tipo, params?.q),
+    queryFn: () => api.listDocumentos(params),
+  });
+}
+
+export function useDocumento(id: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.documento(id ?? ''),
+    queryFn: () => api.getDocumento(id as string),
+    enabled: Boolean(id),
+  });
+}
+
+export function useCreateDocumento() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: DocumentoInput) => api.createDocumento(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['documentos'] }),
+  });
+}
+
+export function useUpdateDocumento() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Partial<DocumentoInput> }) =>
+      api.updateDocumento(id, input),
+    onSuccess: (_data, { id }) => {
+      qc.invalidateQueries({ queryKey: ['documentos'] });
+      qc.invalidateQueries({ queryKey: queryKeys.documento(id) });
+    },
+  });
+}
+
+export function useDeleteDocumento() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.deleteDocumento(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['documentos'] }),
+  });
+}
+
+export function useReindexDocumento() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.reindexDocumento(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['documentos'] }),
+  });
+}
 
 export function useComentarios(iniciativaId: string) {
   return useQuery({

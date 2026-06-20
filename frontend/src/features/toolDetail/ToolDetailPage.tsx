@@ -24,6 +24,7 @@ import { BASE_LEGAL_OPTIONS, NATUREZA_DADO_OPTIONS } from '../../lib/options';
 import { PromptVersionForm } from './PromptVersionForm';
 import { ToolVersionForm } from './ToolVersionForm';
 import { DataInventoryForm } from './DataInventoryForm';
+import { ConformidadeCard } from './ConformidadeCard';
 
 type SectionId =
   | 'identificacao'
@@ -126,6 +127,8 @@ export function ToolDetailPage(): ReactNode {
           </>
         )}
       </Card>
+
+      <ConformidadeCard toolId={ferramenta.id} />
 
       <div className="gd-tabs" role="tablist" aria-label="Seções da ficha técnica" style={{ marginTop: 'var(--gd-space-4)' }}>
         {SECTIONS.map((section) => (

@@ -20,6 +20,12 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { to: '/painel', label: 'Painel' },
   { to: '/busca', label: 'Busca' },
+  { to: '/conhecimento', label: 'Conhecimento' },
+  {
+    to: '/responder-sei',
+    label: 'Responder SEI',
+    roles: ['owner_ferramenta', 'coordenador_comite', 'admin'],
+  },
   { to: '/catalogo', label: 'Catálogo' },
   { to: '/golden-datasets', label: 'Golden datasets' },
   { to: '/avaliacoes', label: 'Avaliações' },

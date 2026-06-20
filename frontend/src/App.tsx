@@ -13,6 +13,8 @@ import { CallbackScreen } from './features/auth/CallbackScreen';
 // tirando bibliotecas pesadas (ex.: gráficos dos Indicadores) do bundle inicial.
 const PainelPage = lazy(() => import('./features/painel/PainelPage').then((m) => ({ default: m.PainelPage })));
 const BuscaPage = lazy(() => import('./features/busca/BuscaPage').then((m) => ({ default: m.BuscaPage })));
+const ConhecimentoPage = lazy(() => import('./features/conhecimento/ConhecimentoPage').then((m) => ({ default: m.ConhecimentoPage })));
+const ResponderSeiPage = lazy(() => import('./features/responderSei/ResponderSeiPage').then((m) => ({ default: m.ResponderSeiPage })));
 const CatalogPage = lazy(() => import('./features/catalog/CatalogPage').then((m) => ({ default: m.CatalogPage })));
 const ToolDetailPage = lazy(() => import('./features/toolDetail/ToolDetailPage').then((m) => ({ default: m.ToolDetailPage })));
 const ToolVersionsPage = lazy(() => import('./features/toolVersions/ToolVersionsPage').then((m) => ({ default: m.ToolVersionsPage })));
@@ -38,6 +40,15 @@ export function App(): ReactNode {
         <Route index element={<Navigate to="/painel" replace />} />
         <Route path="/painel" element={<PainelPage />} />
         <Route path="/busca" element={<BuscaPage />} />
+        <Route path="/conhecimento" element={<ConhecimentoPage />} />
+        <Route
+          path="/responder-sei"
+          element={
+            <RequireAuth roles={['owner_ferramenta', 'coordenador_comite', 'admin']}>
+              <ResponderSeiPage />
+            </RequireAuth>
+          }
+        />
         <Route path="/catalogo" element={<CatalogPage />} />
         <Route path="/ferramentas/:id" element={<ToolDetailPage />} />
         <Route path="/ferramentas/:id/versoes" element={<ToolVersionsPage />} />

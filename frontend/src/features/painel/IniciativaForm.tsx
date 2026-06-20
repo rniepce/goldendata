@@ -14,15 +14,43 @@ const RESP_OPTIONS = [
   ...MEMBROS_GEXIA.map((m) => ({ value: m.email, label: m.nome })),
 ];
 
-export function IniciativaForm({ onCreated }: { onCreated: () => void }): ReactNode {
+const CATEGORIAS_VALIDAS: IniciativaCategoria[] = [
+  'solucao_ia',
+  'educacional',
+  'suporte',
+  'governanca_normativo',
+  'cooperacao',
+  'pesquisa_prospeccao',
+];
+
+/** Valores iniciais opcionais (ex.: pré-preenchimento a partir de documento, #77). */
+export interface IniciativaInicial {
+  titulo?: string;
+  resumo?: string;
+  categoria?: string;
+  processo_sei?: string;
+}
+
+export function IniciativaForm({
+  onCreated,
+  inicial,
+}: {
+  onCreated: () => void;
+  inicial?: IniciativaInicial;
+}): ReactNode {
   const create = useCreateIniciativa();
-  const [titulo, setTitulo] = useState('');
-  const [resumo, setResumo] = useState('');
-  const [categoria, setCategoria] = useState<IniciativaCategoria>('solucao_ia');
+  const catInicial =
+    inicial?.categoria && CATEGORIAS_VALIDAS.includes(inicial.categoria as IniciativaCategoria)
+      ? (inicial.categoria as IniciativaCategoria)
+      : 'solucao_ia';
+  const [titulo, setTitulo] = useState(inicial?.titulo ?? '');
+  const [resumo, setResumo] = useState(inicial?.resumo ?? '');
+  const [categoria, setCategoria] = useState<IniciativaCategoria>(catInicial);
   const [status, setStatus] = useState<IniciativaStatus>('a_fazer');
   const [prioridade, setPrioridade] = useState<IniciativaPrioridade>('media');
   const [respEmail, setRespEmail] = useState('');
   const [prazo, setPrazo] = useState('');
+  const [processoSei, setProcessoSei] = useState(inicial?.processo_sei ?? '');
 
   function onSubmit(e: FormEvent): void {
     e.preventDefault();
@@ -36,6 +64,7 @@ export function IniciativaForm({ onCreated }: { onCreated: () => void }): ReactN
         prioridade,
         responsavel_email: respEmail || null,
         responsavel_nome: nome,
+        processo_sei: processoSei.trim() || null,
         prazo: prazo || null,
       },
       { onSuccess: onCreated },
@@ -54,6 +83,7 @@ export function IniciativaForm({ onCreated }: { onCreated: () => void }): ReactN
           <SelectField label="Prioridade" value={prioridade} onChange={(v) => setPrioridade(v as IniciativaPrioridade)} options={PRIORIDADE_OPTIONS} />
           <SelectField label="Responsável" value={respEmail} onChange={setRespEmail} options={RESP_OPTIONS} />
           <TextField label="Prazo" type="date" value={prazo} onChange={setPrazo} />
+          <TextField label="Processo SEI" value={processoSei} onChange={setProcessoSei} />
         </div>
         <button type="submit" className="gd-btn" disabled={create.isPending || !titulo.trim()}>
           {create.isPending ? 'Criando…' : 'Criar iniciativa'}

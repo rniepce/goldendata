@@ -25,10 +25,18 @@ import type {
   GoldenCaseInput,
   GoldenDataset,
   GoldenDatasetInput,
+  ChatResposta,
+  ChatTurno,
   Comentario,
   ComentarioInput,
+  ConformidadeResultado,
+  Documento,
+  DocumentoInput,
+  ExtracaoCard,
   Iniciativa,
   IniciativaInput,
+  PlanoPessoal,
+  RedacaoSei,
   KpiQuality,
   ModelBase,
   ModelBaseInput,
@@ -129,6 +137,30 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   return payload as T;
 }
 
+async function requestForm<T>(path: string, form: FormData): Promise<T> {
+  const token = await getAccessToken();
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  // Não definir Content-Type: o browser adiciona o boundary do multipart.
+  let response: Response;
+  try {
+    response = await fetch(buildUrl(path), { method: 'POST', headers, body: form });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') throw err;
+    throw new ApiError(0, 'Não foi possível conectar ao servidor. Verifique sua conexão.');
+  }
+  const isJson = response.headers.get('content-type')?.includes('application/json');
+  const payload = isJson ? await response.json().catch(() => null) : await response.text();
+  if (!response.ok) {
+    const message =
+      (isJson && payload && typeof payload === 'object' && 'detail' in payload
+        ? String((payload as { detail: unknown }).detail)
+        : null) ?? mensagemPadraoPorStatus(response.status);
+    throw new ApiError(response.status, message, payload);
+  }
+  return payload as T;
+}
+
 function mensagemPadraoPorStatus(status: number): string {
   switch (status) {
     case 400:
@@ -226,6 +258,14 @@ export const api = {
     request(`/ia/resumir-ferramenta/${toolId}`, { method: 'POST' }),
   perguntarIA: (pergunta: string): Promise<{ resposta: string }> =>
     request('/ia/perguntar', { method: 'POST', body: { pergunta } }),
+  chatIA: (pergunta: string, historico: ChatTurno[]): Promise<ChatResposta> =>
+    request('/ia/chat', { method: 'POST', body: { pergunta, historico } }),
+  conformidadeFerramenta: (toolId: string): Promise<ConformidadeResultado> =>
+    request(`/ia/conformidade/${toolId}`),
+  redigirRespostaSei: (form: FormData): Promise<RedacaoSei> =>
+    requestForm('/ia/redigir-resposta-sei', form),
+  extrairCard: (form: FormData): Promise<ExtracaoCard> => requestForm('/ia/extrair-card', form),
+  planoPessoal: (): Promise<PlanoPessoal> => request('/ia/plano-pessoal'),
 
   // Iniciativas do GEX-IA (Painel)
   listIniciativas: (params?: {
@@ -248,6 +288,19 @@ export const api = {
     request(`/iniciativas/comentarios/${comentarioId}`, { method: 'PATCH', body: { resolvido } }),
   deleteComentario: (comentarioId: string): Promise<void> =>
     request(`/iniciativas/comentarios/${comentarioId}`, { method: 'DELETE' }),
+
+  // Base de conhecimento (corpus do RAG)
+  listDocumentos: (params?: { tipo?: string; q?: string }): Promise<Documento[]> =>
+    request('/conhecimento', { query: params }),
+  getDocumento: (id: string): Promise<Documento> => request(`/conhecimento/${id}`),
+  createDocumento: (input: DocumentoInput): Promise<Documento> =>
+    request('/conhecimento', { method: 'POST', body: input }),
+  updateDocumento: (id: string, input: Partial<DocumentoInput>): Promise<Documento> =>
+    request(`/conhecimento/${id}`, { method: 'PATCH', body: input }),
+  deleteDocumento: (id: string): Promise<void> =>
+    request(`/conhecimento/${id}`, { method: 'DELETE' }),
+  reindexDocumento: (id: string): Promise<{ documento_id: string; chunks: number }> =>
+    request(`/conhecimento/${id}/reindex`, { method: 'POST' }),
 
   // Gestão de usuários (Supabase Auth)
   listUsers: (): Promise<SupabaseUser[]> => request('/governance/users'),

@@ -1,17 +1,18 @@
 /*
- * Busca global (catálogo + iniciativas + golden datasets) e Q&A por IA sobre o
- * acervo. A busca é instantânea; o Q&A usa a IA assistiva (se configurada).
+ * Busca global (catálogo + iniciativas + golden datasets) e copiloto-chat por IA
+ * sobre o acervo + base de conhecimento. A busca é instantânea; o copiloto usa a
+ * IA assistiva (se configurada) e cita as fontes que utilizar.
  */
 
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
-import { Badge, Card, ErrorAlert, Loading, Markdown, PageHeader } from '../../components/ui';
+import { Badge, Card, ErrorAlert, PageHeader } from '../../components/ui';
+import { Copiloto } from './Copiloto';
 
 export function BuscaPage(): ReactNode {
   const [q, setQ] = useState('');
-  const [pergunta, setPergunta] = useState('');
 
   const busca = useQuery({
     queryKey: ['busca', q],
@@ -19,18 +20,14 @@ export function BuscaPage(): ReactNode {
     enabled: q.trim().length >= 2,
   });
 
-  const qa = useMutation({ mutationFn: (p: string) => api.perguntarIA(p) });
-
-  function onPerguntar(e: FormEvent): void {
-    e.preventDefault();
-    if (pergunta.trim().length >= 3) qa.mutate(pergunta.trim());
-  }
-
   const hits = busca.data?.resultados ?? [];
 
   return (
     <>
-      <PageHeader title="Busca" description="Encontre ferramentas, iniciativas e conjuntos de avaliação — ou pergunte ao assistente." />
+      <PageHeader
+        title="Busca"
+        description="Encontre ferramentas, iniciativas e conjuntos de avaliação — ou converse com o copiloto."
+      />
 
       <Card title="Buscar no acervo">
         <input
@@ -50,11 +47,19 @@ export function BuscaPage(): ReactNode {
             {hits.length > 0 && (
               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                 {hits.map((h) => (
-                  <li key={`${h.tipo}-${h.id}`} style={{ padding: '0.5rem 0', borderBottom: '1px solid var(--gd-color-border)' }}>
-                    <Link to={h.link} style={{ fontWeight: 600 }}>{h.titulo}</Link>{' '}
+                  <li
+                    key={`${h.tipo}-${h.id}`}
+                    style={{ padding: '0.5rem 0', borderBottom: '1px solid var(--gd-color-border)' }}
+                  >
+                    <Link to={h.link} style={{ fontWeight: 600 }}>
+                      {h.titulo}
+                    </Link>{' '}
                     <Badge tone="neutral">{h.tipo}</Badge>
                     {h.subtitulo && (
-                      <div className="gd-meta__value" style={{ color: 'var(--gd-color-text-muted)' }}>
+                      <div
+                        className="gd-meta__value"
+                        style={{ color: 'var(--gd-color-text-muted)' }}
+                      >
                         {h.subtitulo}
                       </div>
                     )}
@@ -67,45 +72,8 @@ export function BuscaPage(): ReactNode {
       </Card>
 
       <div style={{ marginTop: 'var(--gd-space-4)' }}>
-        <Card title="Perguntar ao assistente (IA)">
-          <p style={{ marginTop: 0, color: 'var(--gd-color-text-muted)', fontSize: 'var(--gd-font-size-sm)' }}>
-            Pergunte em linguagem natural sobre o catálogo e as iniciativas. Ex.: “quais soluções estão em uso e de alto risco?”,
-            “quem é responsável pela política de uso de IA generativa?”.
-          </p>
-          <form onSubmit={onPerguntar}>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                className="gd-input"
-                style={{ flex: 1 }}
-                placeholder="Sua pergunta…"
-                aria-label="Pergunta para o assistente de IA"
-                value={pergunta}
-                onChange={(e) => setPergunta(e.target.value)}
-              />
-              <button type="submit" className="gd-btn" disabled={qa.isPending || pergunta.trim().length < 3}>
-                {qa.isPending ? 'Pensando…' : 'Perguntar'}
-              </button>
-            </div>
-          </form>
-          {qa.isPending && <Loading label="Consultando o assistente… (pode levar até 30s)" />}
-          {qa.isError && (
-            <div style={{ marginTop: '0.8rem' }}>
-              <ErrorAlert error={qa.error} />
-              <p style={{ fontSize: 'var(--gd-font-size-sm)', color: 'var(--gd-color-text-muted)' }}>
-                Se a mensagem indicar que a IA não está configurada, defina a chave no backend (GOLDENDATA_AI_API_KEY).
-              </p>
-            </div>
-          )}
-          {qa.data &&
-            (qa.data.resposta?.trim() ? (
-              <div className="gd-md--panel" style={{ marginTop: 'var(--gd-space-4)' }}>
-                <Markdown text={qa.data.resposta} />
-              </div>
-            ) : (
-              <p className="gd-empty" style={{ marginTop: 'var(--gd-space-4)' }}>
-                O assistente não retornou conteúdo. Tente reformular a pergunta.
-              </p>
-            ))}
+        <Card title="Copiloto (IA)">
+          <Copiloto />
         </Card>
       </div>
     </>
