@@ -22,6 +22,7 @@ import { IniciativaDrawer } from './IniciativaDrawer';
 import { IniciativaForm } from './IniciativaForm';
 import { KpiBar } from './KpiBar';
 import { MeuDiaCard } from './MeuDiaCard';
+import { VigiliaCard } from './VigiliaCard';
 import { CalendarView } from './CalendarView';
 import './painel.css';
 
@@ -82,9 +83,12 @@ export function PainelPage(): ReactNode {
       {/* KPIs (refletem o filtro de responsável quando ativo) */}
       <KpiBar itens={visiveis} />
 
-      {/* Plano pessoal do membro logado (#75) */}
+      {/* Plano pessoal do membro logado (#75) + vigília do comitê (#56) */}
       <div style={{ marginTop: 'var(--gd-space-4)' }}>
         <MeuDiaCard />
+      </div>
+      <div style={{ marginTop: 'var(--gd-space-4)' }}>
+        <VigiliaCard />
       </div>
 
       {/* Barra de responsáveis (filtro) */}

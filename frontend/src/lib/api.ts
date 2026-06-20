@@ -31,6 +31,13 @@ import type {
   CockpitData,
   Comentario,
   ComentarioInput,
+  Demanda,
+  DemandaInput,
+  DemandaTriagemInput,
+  Encaminhamento,
+  EncaminhamentoInput,
+  Incidente,
+  IncidenteInput,
   RiscoSugestao,
   ToolSaude,
   ConformidadeResultado,
@@ -281,6 +288,8 @@ export const api = {
   sugerirRisco: (texto: string): Promise<RiscoSugestao> =>
     request('/ia/sugerir-risco', { method: 'POST', body: { texto } }),
   briefingReuniao: (): Promise<BriefingReuniao> => request('/ia/briefing-reuniao'),
+  vigilia: (): Promise<{ boletim: string; contadores: CockpitData['contadores'] }> =>
+    request('/ia/vigilia'),
 
   // Iniciativas do GEX-IA (Painel)
   listIniciativas: (params?: {
@@ -306,6 +315,34 @@ export const api = {
 
   // Cockpit de pendências do comitê
   cockpit: (): Promise<CockpitData> => request('/cockpit'),
+
+  // Balcão de demandas (#37)
+  listDemandas: (status?: string): Promise<Demanda[]> =>
+    request('/demandas', { query: { status } }),
+  createDemanda: (input: DemandaInput): Promise<Demanda> =>
+    request('/demandas', { method: 'POST', body: input }),
+  triarDemanda: (id: string, input: DemandaTriagemInput): Promise<Demanda> =>
+    request(`/demandas/${id}/triagem`, { method: 'POST', body: input }),
+
+  // Incidentes (#1)
+  listIncidentes: (toolId?: string): Promise<Incidente[]> =>
+    request('/incidentes', { query: { tool_id: toolId } }),
+  createIncidente: (input: IncidenteInput): Promise<Incidente> =>
+    request('/incidentes', { method: 'POST', body: input }),
+  updateIncidente: (id: string, input: Partial<IncidenteInput>): Promise<Incidente> =>
+    request(`/incidentes/${id}`, { method: 'PATCH', body: input }),
+
+  // Encaminhamentos (#42)
+  listEncaminhamentos: (params?: {
+    responsavel?: string;
+    status?: string;
+  }): Promise<Encaminhamento[]> => request('/encaminhamentos', { query: params }),
+  createEncaminhamento: (input: EncaminhamentoInput): Promise<Encaminhamento> =>
+    request('/encaminhamentos', { method: 'POST', body: input }),
+  updateEncaminhamento: (
+    id: string,
+    input: Partial<EncaminhamentoInput> & { status?: string },
+  ): Promise<Encaminhamento> => request(`/encaminhamentos/${id}`, { method: 'PATCH', body: input }),
 
   // Base de conhecimento (corpus do RAG)
   listDocumentos: (params?: { tipo?: string; q?: string }): Promise<Documento[]> =>

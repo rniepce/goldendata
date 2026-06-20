@@ -14,6 +14,9 @@ import { CallbackScreen } from './features/auth/CallbackScreen';
 const PainelPage = lazy(() => import('./features/painel/PainelPage').then((m) => ({ default: m.PainelPage })));
 const BuscaPage = lazy(() => import('./features/busca/BuscaPage').then((m) => ({ default: m.BuscaPage })));
 const CockpitPage = lazy(() => import('./features/cockpit/CockpitPage').then((m) => ({ default: m.CockpitPage })));
+const DemandasPage = lazy(() => import('./features/demandas/DemandasPage').then((m) => ({ default: m.DemandasPage })));
+const EncaminhamentosPage = lazy(() => import('./features/encaminhamentos/EncaminhamentosPage').then((m) => ({ default: m.EncaminhamentosPage })));
+const IncidentesPage = lazy(() => import('./features/incidentes/IncidentesPage').then((m) => ({ default: m.IncidentesPage })));
 const ConhecimentoPage = lazy(() => import('./features/conhecimento/ConhecimentoPage').then((m) => ({ default: m.ConhecimentoPage })));
 const ResponderSeiPage = lazy(() => import('./features/responderSei/ResponderSeiPage').then((m) => ({ default: m.ResponderSeiPage })));
 const GovernancaKanbanPage = lazy(() => import('./features/governanca/GovernancaKanbanPage').then((m) => ({ default: m.GovernancaKanbanPage })));
@@ -42,6 +45,9 @@ export function App(): ReactNode {
         <Route index element={<Navigate to="/painel" replace />} />
         <Route path="/painel" element={<PainelPage />} />
         <Route path="/cockpit" element={<CockpitPage />} />
+        <Route path="/demandas" element={<DemandasPage />} />
+        <Route path="/encaminhamentos" element={<EncaminhamentosPage />} />
+        <Route path="/incidentes" element={<IncidentesPage />} />
         <Route path="/busca" element={<BuscaPage />} />
         <Route path="/conhecimento" element={<ConhecimentoPage />} />
         <Route

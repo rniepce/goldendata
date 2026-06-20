@@ -277,6 +277,88 @@ export interface CockpitData {
   };
 }
 
+// ---------- Balcão de demandas (#37) ----------
+export type DemandaStatus = 'nova' | 'em_triagem' | 'aceita' | 'recusada' | 'devolvida';
+
+export interface Demanda {
+  id: string;
+  unidade_demandante: string;
+  titulo: string;
+  problema: string | null;
+  processo_sei: string | null;
+  classificacao_risco_preliminar: string | null;
+  status: DemandaStatus;
+  motivo: string | null;
+  iniciativa_id: string | null;
+  criado_em: string;
+  atualizado_em: string;
+}
+
+export interface DemandaInput {
+  unidade_demandante: string;
+  titulo: string;
+  problema?: string | null;
+  processo_sei?: string | null;
+  classificacao_risco_preliminar?: string | null;
+}
+
+export interface DemandaTriagemInput {
+  acao: 'aceitar' | 'recusar' | 'devolver';
+  motivo?: string | null;
+  categoria?: string | null;
+}
+
+// ---------- Incidentes (#1 — SLA 72h) ----------
+export interface Incidente {
+  id: string;
+  tool_id: string;
+  tool_nome: string;
+  tool_codigo: string;
+  descricao_evento: string;
+  causa: string | null;
+  medida_correcao: string | null;
+  identificado_em: string;
+  comunicado_em: string | null;
+  prazo_72h_cumprido: boolean | null;
+  reportado_por_sub: string | null;
+  criado_em: string;
+}
+
+export interface IncidenteInput {
+  tool_id: string;
+  descricao_evento: string;
+  causa?: string | null;
+  medida_correcao?: string | null;
+  identificado_em: string;
+  comunicado_em?: string | null;
+  prazo_72h_cumprido?: boolean | null;
+}
+
+// ---------- Encaminhamentos (#42) ----------
+export type EncaminhamentoStatus = 'aberto' | 'feito' | 'cancelado';
+
+export interface Encaminhamento {
+  id: string;
+  descricao: string;
+  responsavel_email: string | null;
+  responsavel_nome: string | null;
+  prazo: string | null;
+  origem: string | null;
+  iniciativa_id: string | null;
+  status: EncaminhamentoStatus;
+  criado_em: string;
+  atualizado_em: string;
+}
+
+export interface EncaminhamentoInput {
+  descricao: string;
+  responsavel_email?: string | null;
+  responsavel_nome?: string | null;
+  prazo?: string | null;
+  origem?: string | null;
+  iniciativa_id?: string | null;
+}
+
 // ---------- Registro (3.2) ----------
 export type Hospedagem = 'api_externa' | 'on_premise' | 'nuvem_homologada';
 

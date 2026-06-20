@@ -510,6 +510,37 @@ def briefing_reuniao(ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
     return {"pauta": pauta, "contadores": c}
 
 
+# ---------------- IA: sentinela / vigília de hoje (#56) ----------------
+@router.get("/ia/vigilia")
+def vigilia(ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
+    dados = cockpit_svc.get_cockpit(ctx.conn)
+    c = dados["contadores"]
+    estado = (
+        f"Gates a homologar: {c['gates']} · Revisões vencidas/a vencer: {c['revisoes']} · "
+        f"RIPD/AIA pendente: {c['ripd']} · Incidentes em aberto: {c['incidentes']} · "
+        f"Comentários abertos: {c['comentarios']} · Iniciativas atrasadas: {c['iniciativas']}"
+    )
+    destaques = [f"Revisão VENCIDA: {r['nome']}" for r in dados["revisoes"] if r["vencida"]][:5]
+    destaques += [
+        f"Iniciativa atrasada: {i['titulo']} (prazo {i['prazo']})"
+        for i in dados["iniciativas_atrasadas"][:5]
+    ]
+    det = "\n".join(destaques) or "(sem itens críticos destacados)"
+    system = (
+        "Você é a sentinela do GEX-IA (TJMG). A partir do estado atual, liste em 3 a 5 tópicos "
+        "curtos APENAS o que exige ação humana HOJE, em ordem de urgência. Se nada for urgente, "
+        "diga isso claramente. Português, direto. Não invente itens além do estado fornecido. "
+        + _CNJ_RISCO
+    )
+    try:
+        boletim = ia.chamar(system, f"RESUMO:\n{estado}\n\nDESTAQUES:\n{det}", max_tokens=500)
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    return {"boletim": boletim, "contadores": c}
+
+
 @router.get("/ia/disponivel")
 def ia_disponivel(ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
     return {"disponivel": ia.disponivel()}

@@ -8,8 +8,12 @@ import { api } from './api';
 import type {
   AnnotationInput,
   DataInventoryInput,
+  DemandaInput,
+  DemandaTriagemInput,
   DocumentoInput,
+  EncaminhamentoInput,
   EvalOutputInput,
+  IncidenteInput,
   GateInput,
   GateDecisionInput,
   ComentarioInput,
@@ -242,6 +246,87 @@ export function useUpdateToolStage() {
 
 export function useCockpit() {
   return useQuery({ queryKey: ['cockpit'], queryFn: api.cockpit });
+}
+
+// ---------- Balcão de demandas (#37) ----------
+export function useDemandas(status?: string) {
+  return useQuery({ queryKey: ['demandas', status ?? ''], queryFn: () => api.listDemandas(status) });
+}
+
+export function useCreateDemanda() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: DemandaInput) => api.createDemanda(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['demandas'] }),
+  });
+}
+
+export function useTriarDemanda() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: DemandaTriagemInput }) =>
+      api.triarDemanda(id, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['demandas'] });
+      qc.invalidateQueries({ queryKey: queryKeys.iniciativas });
+    },
+  });
+}
+
+// ---------- Incidentes (#1) ----------
+export function useIncidentes(toolId?: string) {
+  return useQuery({
+    queryKey: ['incidentes', toolId ?? ''],
+    queryFn: () => api.listIncidentes(toolId),
+  });
+}
+
+export function useCreateIncidente() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: IncidenteInput) => api.createIncidente(input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['incidentes'] });
+      qc.invalidateQueries({ queryKey: ['cockpit'] });
+    },
+  });
+}
+
+export function useUpdateIncidente() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Partial<IncidenteInput> }) =>
+      api.updateIncidente(id, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['incidentes'] });
+      qc.invalidateQueries({ queryKey: ['cockpit'] });
+    },
+  });
+}
+
+// ---------- Encaminhamentos (#42) ----------
+export function useEncaminhamentos(params?: { responsavel?: string; status?: string }) {
+  return useQuery({
+    queryKey: ['encaminhamentos', params?.responsavel ?? '', params?.status ?? ''],
+    queryFn: () => api.listEncaminhamentos(params),
+  });
+}
+
+export function useCreateEncaminhamento() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: EncaminhamentoInput) => api.createEncaminhamento(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['encaminhamentos'] }),
+  });
+}
+
+export function useUpdateEncaminhamento() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Partial<EncaminhamentoInput> & { status?: string } }) =>
+      api.updateEncaminhamento(id, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['encaminhamentos'] }),
+  });
 }
 
 export function useRegistrarRevisao() {
