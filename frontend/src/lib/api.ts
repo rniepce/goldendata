@@ -29,6 +29,7 @@ import type {
   ChatResposta,
   ChatTurno,
   CockpitData,
+  CopilotoResposta,
   Comentario,
   ComentarioInput,
   Demanda,
@@ -275,6 +276,13 @@ export const api = {
     request('/ia/perguntar', { method: 'POST', body: { pergunta } }),
   chatIA: (pergunta: string, historico: ChatTurno[]): Promise<ChatResposta> =>
     request('/ia/chat', { method: 'POST', body: { pergunta, historico } }),
+  copilotoPlanejar: (mensagem: string, historico: ChatTurno[]): Promise<CopilotoResposta> =>
+    request('/ia/copiloto', { method: 'POST', body: { mensagem, historico } }),
+  copilotoExecutar: (
+    ferramenta: string,
+    args: Record<string, unknown>,
+  ): Promise<{ ok: boolean; ferramenta: string; resultado: unknown }> =>
+    request('/ia/copiloto/executar', { method: 'POST', body: { ferramenta, args } }),
   conformidadeFerramenta: (toolId: string): Promise<ConformidadeResultado> =>
     request(`/ia/conformidade/${toolId}`),
   redigirRespostaSei: (form: FormData): Promise<RedacaoSei> =>

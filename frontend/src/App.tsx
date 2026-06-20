@@ -17,6 +17,7 @@ const CockpitPage = lazy(() => import('./features/cockpit/CockpitPage').then((m)
 const DemandasPage = lazy(() => import('./features/demandas/DemandasPage').then((m) => ({ default: m.DemandasPage })));
 const EncaminhamentosPage = lazy(() => import('./features/encaminhamentos/EncaminhamentosPage').then((m) => ({ default: m.EncaminhamentosPage })));
 const IncidentesPage = lazy(() => import('./features/incidentes/IncidentesPage').then((m) => ({ default: m.IncidentesPage })));
+const CopilotoPage = lazy(() => import('./features/copiloto/CopilotoPage').then((m) => ({ default: m.CopilotoPage })));
 const ConhecimentoPage = lazy(() => import('./features/conhecimento/ConhecimentoPage').then((m) => ({ default: m.ConhecimentoPage })));
 const ResponderSeiPage = lazy(() => import('./features/responderSei/ResponderSeiPage').then((m) => ({ default: m.ResponderSeiPage })));
 const GovernancaKanbanPage = lazy(() => import('./features/governanca/GovernancaKanbanPage').then((m) => ({ default: m.GovernancaKanbanPage })));
@@ -49,6 +50,14 @@ export function App(): ReactNode {
         <Route path="/encaminhamentos" element={<EncaminhamentosPage />} />
         <Route path="/incidentes" element={<IncidentesPage />} />
         <Route path="/busca" element={<BuscaPage />} />
+        <Route
+          path="/copiloto"
+          element={
+            <RequireAuth roles={['owner_ferramenta', 'coordenador_comite', 'avaliador', 'admin']}>
+              <CopilotoPage />
+            </RequireAuth>
+          }
+        />
         <Route path="/conhecimento" element={<ConhecimentoPage />} />
         <Route
           path="/responder-sei"

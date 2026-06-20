@@ -23,6 +23,11 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/demandas', label: 'Demandas' },
   { to: '/encaminhamentos', label: 'Encaminhamentos' },
   { to: '/busca', label: 'Busca' },
+  {
+    to: '/copiloto',
+    label: 'Copiloto',
+    roles: ['owner_ferramenta', 'coordenador_comite', 'avaliador', 'admin'],
+  },
   { to: '/conhecimento', label: 'Conhecimento' },
   {
     to: '/responder-sei',

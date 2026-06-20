@@ -160,6 +160,19 @@ export interface ChatResposta {
   fontes: FonteRag[];
 }
 
+// ---------- Copiloto operável (#63) ----------
+export interface CopilotoAcao {
+  ferramenta: string;
+  args: Record<string, unknown>;
+  resumo: string;
+}
+
+export interface CopilotoResposta {
+  tipo: 'resposta' | 'confirmar';
+  texto?: string;
+  acao?: CopilotoAcao;
+}
+
 // ---------- Assistente de conformidade (#24) ----------
 export type ConformidadeStatus = 'ok' | 'pendente' | 'na';
 

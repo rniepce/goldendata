@@ -10,7 +10,7 @@ from datetime import date
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from app.core import doctext, ia, rag
 from app.core.db import fetch_all, fetch_one
@@ -20,7 +20,7 @@ from app.domain.cockpit import service as cockpit_svc
 from app.domain.evaluation.gate import evaluate_gate
 from app.domain.registry import service as registry_svc
 
-from . import conformidade
+from . import conformidade, copiloto
 
 router = APIRouter(tags=["assistente"])
 
@@ -225,6 +225,89 @@ def chat(body: ChatPergunta, ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
     except ValueError as exc:
         raise HTTPException(502, str(exc)) from exc
     return {"resposta": resposta, "fontes": fontes}
+
+
+# ---------------- IA: copiloto operável por linguagem natural (#63) ----------------
+class CopilotoMensagem(BaseModel):
+    mensagem: str = Field(min_length=1)
+    historico: list[ChatTurno] = Field(default_factory=list)
+
+
+class CopilotoExecucao(BaseModel):
+    ferramenta: str
+    args: dict[str, Any] = Field(default_factory=dict)
+
+
+_COPILOTO_EXEC = require_role("owner_ferramenta", "coordenador_comite", "avaliador", "admin")
+
+
+@router.post("/ia/copiloto")
+def copiloto_planejar(body: CopilotoMensagem, ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
+    """Planeja: o LLM responde OU propõe uma ação de escrita (que volta como
+    'confirmar' — nunca executa aqui)."""
+    chunks = rag.retrieve(ctx.conn, body.mensagem, k=5)
+    contexto_docs, _f = rag.build_context(chunks)
+    ctx_tools, ctx_inic = _acervo_contexto(ctx.conn)
+    system = (
+        "Você é o copiloto OPERACIONAL do GEX-IA (TJMG). Pode responder sobre o acervo/diretrizes "
+        'OU PROPOR uma ação de escrita para o usuário confirmar. Responda SEMPRE um único objeto '
+        'JSON:\n- responder: {"tipo":"resposta","texto":"..."}\n'
+        '- propor ação: {"tipo":"acao","acao":{"ferramenta":"...","args":{...},"resumo":"..."}}\n'
+        "NUNCA afirme que executou algo — toda ação é apenas PROPOSTA e depende de confirmação "
+        "humana. Se faltar dado obrigatório, peça na 'resposta'. Use somente as ações listadas.\n\n"
+        "AÇÕES DISPONÍVEIS:\n" + copiloto.CATALOGO_PROMPT + "\n\n" + _CNJ_RISCO
+    )
+    partes: list[str] = []
+    if contexto_docs:
+        partes.append(f"CONHECIMENTO:\n{contexto_docs}")
+    partes.append(f"FERRAMENTAS:\n{ctx_tools or '(vazio)'}")
+    partes.append(f"INICIATIVAS:\n{ctx_inic or '(vazio)'}")
+    if body.historico:
+        partes.append(
+            "CONVERSA ANTERIOR:\n"
+            + "\n".join(
+                f"{'Usuário' if t.papel == 'user' else 'Assistente'}: {t.texto}"
+                for t in body.historico[-6:]
+            )
+        )
+    partes.append(f"MENSAGEM DO USUÁRIO: {body.mensagem}")
+    try:
+        bruto = ia.chamar(system, "\n\n".join(partes), max_tokens=900)
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    dados = doctext.parse_primeiro_json(bruto)
+    acao = dados.get("acao") if isinstance(dados.get("acao"), dict) else None
+    if dados.get("tipo") == "acao" and acao and copiloto.acao_existe(acao.get("ferramenta")):
+        return {
+            "tipo": "confirmar",
+            "acao": {
+                "ferramenta": acao.get("ferramenta"),
+                "args": acao.get("args") or {},
+                "resumo": acao.get("resumo") or acao.get("ferramenta"),
+            },
+        }
+    texto = dados.get("texto") if dados.get("tipo") == "resposta" else None
+    return {"tipo": "resposta", "texto": texto or bruto}
+
+
+@router.post("/ia/copiloto/executar")
+def copiloto_executar(
+    body: CopilotoExecucao, ctx: Ctx = Depends(get_ctx), _=Depends(_COPILOTO_EXEC)
+):
+    """Executa a ação CONFIRMADA pelo humano, sob a identidade/RBAC do usuário
+    (auditada como a pessoa real, não 'mcp')."""
+    try:
+        resultado = copiloto.executar(ctx.conn, ctx.user, body.ferramenta, body.args)
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except ValidationError as exc:
+        det = "; ".join(f"{e['loc'][-1]}: {e['msg']}" for e in exc.errors())
+        raise HTTPException(422, f"Dados inválidos — {det}") from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return {"ok": True, "ferramenta": body.ferramenta, "resultado": resultado}
 
 
 # ---------------- IA: assistente de conformidade (#24) ----------------
