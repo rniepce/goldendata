@@ -7,7 +7,7 @@ import {
   useDeleteComentario,
   useResolverComentario,
 } from '../../lib/queries';
-import { iniciais } from './IniciativaCard';
+import { iniciais } from './avatar';
 
 /** Aceita apenas anexos http(s); bloqueia javascript:/data:/vbscript: (XSS via href). */
 function urlHttpSegura(u?: string | null): string | null {

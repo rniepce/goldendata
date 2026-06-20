@@ -17,7 +17,8 @@ import {
   corMembro,
 } from '../../lib/options';
 import type { Iniciativa } from '../../lib/types';
-import { IniciativaCard, iniciais } from './IniciativaCard';
+import { IniciativaCard } from './IniciativaCard';
+import { iniciais } from './avatar';
 import { IniciativaDrawer } from './IniciativaDrawer';
 import { IniciativaForm } from './IniciativaForm';
 import { KpiBar } from './KpiBar';
@@ -38,7 +39,7 @@ export function PainelPage(): ReactNode {
   const [aberta, setAberta] = useState<Iniciativa | null>(null);
   const [novaAberta, setNovaAberta] = useState(false);
 
-  const todas = data ?? [];
+  const todas = useMemo(() => data ?? [], [data]);
 
   // Responsáveis distintos (com contagem) para a barra de filtro.
   const responsaveis = useMemo(() => {

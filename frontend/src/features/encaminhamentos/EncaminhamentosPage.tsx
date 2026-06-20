@@ -22,7 +22,7 @@ import {
   TextField,
 } from '../../components/ui';
 import { MEMBROS_GEXIA, corMembro } from '../../lib/options';
-import { iniciais } from '../painel/IniciativaCard';
+import { iniciais } from '../painel/avatar';
 import type { Encaminhamento } from '../../lib/types';
 
 const RESP_OPTIONS = [

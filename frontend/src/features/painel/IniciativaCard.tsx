@@ -2,12 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { Badge } from '../../components/ui';
 import { CATEGORIA_META, PRIORIDADE_META, STATUS_META, corMembro } from '../../lib/options';
 import type { Iniciativa, IniciativaCategoria } from '../../lib/types';
-
-export function iniciais(nome?: string | null): string {
-  if (!nome) return '?';
-  const p = nome.trim().split(/\s+/);
-  return ((p[0]?.[0] ?? '') + (p.length > 1 ? (p[p.length - 1][0] ?? '') : '')).toUpperCase();
-}
+import { iniciais } from './avatar';
 
 /** Badge de categoria com a cor própria da categoria (reutilizado no drawer). */
 export function CategoriaBadge({ categoria }: { categoria: IniciativaCategoria }): ReactNode {
