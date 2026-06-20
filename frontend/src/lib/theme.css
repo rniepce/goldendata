@@ -546,6 +546,8 @@ p { margin: 0 0 var(--gd-space-3); }
 .gd-stack { display: flex; flex-direction: column; gap: var(--gd-space-4); }
 .gd-row { display: flex; gap: var(--gd-space-3); flex-wrap: wrap; align-items: center; }
 .gd-mono { font-family: var(--gd-font-mono); font-size: var(--gd-font-size-xs); }
+/* Código-registro inline (DOS-17, BR5, hashes) — mono no tamanho herdado */
+.gd-code { font-family: var(--gd-font-mono); }
 .gd-timeline { list-style: none; padding: 0; margin: 0; border-left: 2px solid var(--gd-color-border); }
 .gd-timeline li { position: relative; padding: 0 0 var(--gd-space-4) var(--gd-space-5); }
 .gd-timeline li::before {

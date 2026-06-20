@@ -74,7 +74,12 @@ export function ToolDetailPage(): ReactNode {
     <>
       <PageHeader
         title={ferramenta.nome}
-        description={`Código institucional ${ferramenta.codigo_institucional} · ${ferramenta.unidade_responsavel}`}
+        description={
+          <>
+            Código institucional <span className="gd-code">{ferramenta.codigo_institucional}</span> ·{' '}
+            {ferramenta.unidade_responsavel}
+          </>
+        }
         actions={
           <>
             <RiskBadge risco={ferramenta.categoria_risco} />
@@ -143,7 +148,7 @@ export function ToolDetailPage(): ReactNode {
         {active === 'identificacao' && (
           <Card title="Identificação">
             <div className="gd-meta-grid">
-              <MetaItem label="Código institucional">{ferramenta.codigo_institucional}</MetaItem>
+              <MetaItem label="Código institucional"><span className="gd-code">{ferramenta.codigo_institucional}</span></MetaItem>
               <MetaItem label="Tipo">
                 <Badge tone={ferramenta.tipo === 'agente' ? 'info' : 'neutral'}>{ferramenta.tipo}</Badge>
               </MetaItem>
@@ -162,7 +167,7 @@ export function ToolDetailPage(): ReactNode {
                 <RiskBadge risco={ferramenta.categoria_risco} />
               </MetaItem>
               <MetaItem label="Categoria CNJ 615">
-                {ferramenta.categoria_risco_cnj ?? '—'}
+                <span className="gd-code">{ferramenta.categoria_risco_cnj ?? '—'}</span>
               </MetaItem>
               <MetaItem label="Revisão humana">
                 {ferramenta.revisao_humana_obrigatoria ? 'Obrigatória' : 'Opcional'}
@@ -216,9 +221,9 @@ export function ToolDetailPage(): ReactNode {
         {active === 'governanca' && (
           <Card title="Dossiê de Governança — GEX-IA / CIAR (CNJ 615/2025)">
             <div className="gd-meta-grid" style={{ marginBottom: '1rem' }}>
-              <MetaItem label="Nº Dossiê">{ferramenta.codigo_institucional}</MetaItem>
+              <MetaItem label="Nº Dossiê"><span className="gd-code">{ferramenta.codigo_institucional}</span></MetaItem>
               <MetaItem label="Categoria de risco CNJ 615">
-                {ferramenta.categoria_risco_cnj ?? '—'}
+                <span className="gd-code">{ferramenta.categoria_risco_cnj ?? '—'}</span>
               </MetaItem>
               <MetaItem label="Estágio">{ferramenta.estagio_gexia ?? '—'}</MetaItem>
               <MetaItem label="Status da governança">{ferramenta.status_governanca ?? '—'}</MetaItem>
