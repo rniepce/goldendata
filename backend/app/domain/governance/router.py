@@ -108,20 +108,33 @@ def create_supabase_user(body: SupabaseUserCreate, ctx: Ctx = Depends(get_ctx), 
 def update_supabase_user_roles(
     user_id: str, body: SupabaseUserRoles, ctx: Ctx = Depends(get_ctx), _=Depends(_ADMIN)
 ):
+    """Altera os papéis (RBAC) de um usuário. Auditado (escalação de privilégio)."""
     try:
-        return supabase_admin.update_roles(user_id, list(body.roles))
+        user = supabase_admin.update_roles(user_id, list(body.roles))
     except (RuntimeError, ValueError) as exc:
         raise HTTPException(400, str(exc)) from exc
+    execute(
+        ctx.conn,
+        "SELECT audit_append(%s, 'update', 'supabase_user', %s, %s)",
+        (ctx.user.sub, str(user_id), Jsonb({"roles": list(body.roles)})),
+    )
+    return user
 
 
 @router.delete("/users/{user_id}", status_code=204)
 def delete_supabase_user(user_id: str, ctx: Ctx = Depends(get_ctx), _=Depends(_ADMIN)):
+    """Remove um usuário do Supabase Auth. Auditado."""
     if user_id == ctx.user.sub:
         raise HTTPException(400, "Não é possível remover a própria conta.")
     try:
         supabase_admin.delete_user(user_id)
     except (RuntimeError, ValueError) as exc:
         raise HTTPException(400, str(exc)) from exc
+    execute(
+        ctx.conn,
+        "SELECT audit_append(%s, 'delete', 'supabase_user', %s, %s)",
+        (ctx.user.sub, str(user_id), Jsonb({})),
+    )
 
 
 @router.post("/role-assignments", status_code=201)

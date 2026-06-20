@@ -1,6 +1,7 @@
 """Configuração via variáveis de ambiente (12-factor — config fora do código)."""
 from __future__ import annotations
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -83,6 +84,27 @@ class Settings(BaseSettings):
     @property
     def cors_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    @model_validator(mode="after")
+    def _enforce_secure_auth_outside_dev(self) -> Settings:
+        """Defesa em profundidade: fora de dev, recusa subir com autenticação
+        insegura (modo demo sem login, ou verificação de assinatura desligada).
+        Exige GOLDENDATA_ENVIRONMENT=prod/homolog/staging no deploy."""
+        nao_dev = self.environment.strip().lower() in {
+            "prod", "production", "producao", "homolog", "homologacao", "staging",
+        }
+        if nao_dev:
+            if self.auth_dev_insecure:
+                raise ValueError(
+                    "GOLDENDATA_AUTH_DEV_INSECURE=true é proibido fora de dev "
+                    f"(environment={self.environment})."
+                )
+            if self.auth_mode == "none":
+                raise ValueError(
+                    "GOLDENDATA_AUTH_MODE=none (acesso sem login) é proibido fora de dev "
+                    f"(environment={self.environment})."
+                )
+        return self
 
 
 settings = Settings()

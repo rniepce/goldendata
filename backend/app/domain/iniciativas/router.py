@@ -96,3 +96,8 @@ def delete_comentario(comentario_id: str, ctx: Ctx = Depends(get_ctx), _=Depends
     if c["autor_sub"] != ctx.user.sub and not ctx.user.has_any("coordenador_comite", "admin"):
         raise HTTPException(403, "Sem permissão para remover este comentário")
     service.delete_comentario(ctx.conn, comentario_id)
+    execute(
+        ctx.conn,
+        "SELECT audit_append(%s, 'delete', 'comentario', %s, %s)",
+        (ctx.user.sub, str(comentario_id), Jsonb({"iniciativa_id": str(c["iniciativa_id"])})),
+    )

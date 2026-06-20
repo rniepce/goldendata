@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 Categoria = Literal[
     "solucao_ia", "educacional", "suporte",
@@ -31,6 +31,19 @@ class ComentarioCreate(BaseModel):
     texto: str = Field(min_length=1)
     anexo_url: str | None = None
     anexo_titulo: str | None = None
+
+    @field_validator("anexo_url")
+    @classmethod
+    def _anexo_url_http(cls, v: str | None) -> str | None:
+        """Só aceita anexo-link http(s). Bloqueia javascript:/data:/vbscript: (XSS)."""
+        if v is None:
+            return v
+        v = v.strip()
+        if not v:
+            return None
+        if not (v.startswith("http://") or v.startswith("https://")):
+            raise ValueError("anexo_url deve ser uma URL http(s)")
+        return v
 
 
 class ComentarioUpdate(BaseModel):

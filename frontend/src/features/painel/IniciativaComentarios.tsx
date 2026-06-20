@@ -9,6 +9,17 @@ import {
 } from '../../lib/queries';
 import { iniciais } from './IniciativaCard';
 
+/** Aceita apenas anexos http(s); bloqueia javascript:/data:/vbscript: (XSS via href). */
+function urlHttpSegura(u?: string | null): string | null {
+  if (!u) return null;
+  try {
+    const p = new URL(u);
+    return p.protocol === 'http:' || p.protocol === 'https:' ? u : null;
+  } catch {
+    return null;
+  }
+}
+
 export function IniciativaComentarios({ iniciativaId }: { iniciativaId: string }): ReactNode {
   const { user } = useAuth();
   const { data, isLoading, isError, error } = useComentarios(iniciativaId);
@@ -69,11 +80,21 @@ export function IniciativaComentarios({ iniciativaId }: { iniciativaId: string }
               )}
             </div>
             <div className="painel-coment__texto">{c.texto}</div>
-            {c.anexo_url && (
-              <a className="painel-coment__anexo" href={c.anexo_url} target="_blank" rel="noreferrer">
-                📎 {c.anexo_titulo || c.anexo_url}
-              </a>
-            )}
+            {c.anexo_url &&
+              (urlHttpSegura(c.anexo_url) ? (
+                <a
+                  className="painel-coment__anexo"
+                  href={urlHttpSegura(c.anexo_url) ?? undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  📎 {c.anexo_titulo || c.anexo_url}
+                </a>
+              ) : (
+                <span className="painel-coment__anexo" title="Anexo com URL não-http ignorado">
+                  📎 {c.anexo_titulo || c.anexo_url}
+                </span>
+              ))}
             <div className="painel-coment__acoes">
               <button
                 type="button"
