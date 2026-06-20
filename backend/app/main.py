@@ -19,6 +19,7 @@ from app.core.deps import Ctx, get_ctx
 from app.domain.assistente.router import router as assistente_router
 from app.domain.cockpit.router import router as cockpit_router
 from app.domain.conhecimento.router import router as conhecimento_router
+from app.domain.deliberacoes.router import router as deliberacoes_router
 from app.domain.demandas.router import router as demandas_router
 from app.domain.encaminhamentos.router import router as encaminhamentos_router
 from app.domain.evaluation.router import router as evaluation_router
@@ -108,6 +109,7 @@ app.include_router(governance_router, prefix=settings.api_prefix)
 app.include_router(iniciativas_router, prefix=settings.api_prefix)
 app.include_router(conhecimento_router, prefix=settings.api_prefix)
 app.include_router(cockpit_router, prefix=settings.api_prefix)
+app.include_router(deliberacoes_router, prefix=settings.api_prefix)
 app.include_router(demandas_router, prefix=settings.api_prefix)
 app.include_router(encaminhamentos_router, prefix=settings.api_prefix)
 app.include_router(incidentes_router, prefix=settings.api_prefix)

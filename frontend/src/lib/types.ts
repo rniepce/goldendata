@@ -335,6 +335,47 @@ export interface DemandaSugestaoIA {
   justificativa?: string;
 }
 
+// ---------- Deliberações com voto (#38) ----------
+export type DeliberacaoStatus = 'aberta' | 'encerrada';
+export type VotoValor = 'favoravel' | 'contrario' | 'abstencao' | 'impedido';
+
+export interface Deliberacao {
+  id: string;
+  titulo: string;
+  pauta: string | null;
+  relator_email: string | null;
+  iniciativa_id: string | null;
+  tool_id: string | null;
+  status: DeliberacaoStatus;
+  resultado: string | null;
+  criado_em: string;
+  atualizado_em: string;
+  n_votos?: number;
+}
+
+export interface DeliberacaoInput {
+  titulo: string;
+  pauta?: string | null;
+  relator_email?: string | null;
+  iniciativa_id?: string | null;
+  tool_id?: string | null;
+}
+
+export interface Voto {
+  id: string;
+  deliberacao_id: string;
+  membro_email: string;
+  membro_nome: string | null;
+  valor: VotoValor;
+  criado_em: string;
+}
+
+export interface DeliberacaoDetalhe {
+  deliberacao: Deliberacao;
+  votos: Voto[];
+  apuracao: Record<VotoValor, number>;
+}
+
 // ---------- Incidentes (#1 — SLA 72h) ----------
 export interface Incidente {
   id: string;

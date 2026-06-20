@@ -8,6 +8,7 @@ import { api } from './api';
 import type {
   AnnotationInput,
   DataInventoryInput,
+  DeliberacaoInput,
   DemandaInput,
   DemandaTriagemInput,
   DocumentoInput,
@@ -246,6 +247,50 @@ export function useUpdateToolStage() {
 
 export function useCockpit() {
   return useQuery({ queryKey: ['cockpit'], queryFn: api.cockpit });
+}
+
+// ---------- Deliberações com voto (#38) ----------
+export function useDeliberacoes(status?: string) {
+  return useQuery({
+    queryKey: ['deliberacoes', status ?? ''],
+    queryFn: () => api.listDeliberacoes(status),
+  });
+}
+
+export function useDeliberacao(id?: string) {
+  return useQuery({
+    queryKey: ['deliberacao', id ?? ''],
+    queryFn: () => api.getDeliberacao(id as string),
+    enabled: Boolean(id),
+  });
+}
+
+export function useCreateDeliberacao() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: DeliberacaoInput) => api.createDeliberacao(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['deliberacoes'] }),
+  });
+}
+
+export function useRegistrarVoto(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { membro_email: string; membro_nome?: string | null; valor: string }) =>
+      api.registrarVoto(id, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['deliberacao', id] }),
+  });
+}
+
+export function useEncerrarDeliberacao(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (resultado?: string) => api.encerrarDeliberacao(id, resultado),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['deliberacao', id] });
+      qc.invalidateQueries({ queryKey: ['deliberacoes'] });
+    },
+  });
 }
 
 // ---------- Balcão de demandas (#37) ----------

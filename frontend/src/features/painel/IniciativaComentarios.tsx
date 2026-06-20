@@ -20,6 +20,19 @@ function urlHttpSegura(u?: string | null): string | null {
   }
 }
 
+/** Realça menções @nome no texto do comentário (#17). */
+function comMencoes(texto: string): ReactNode[] {
+  return texto.split(/(@[\wÀ-ÿ.]+)/g).map((parte, i) =>
+    parte.startsWith('@') ? (
+      <span key={i} style={{ color: 'var(--gd-color-primary)', fontWeight: 600 }}>
+        {parte}
+      </span>
+    ) : (
+      <span key={i}>{parte}</span>
+    ),
+  );
+}
+
 export function IniciativaComentarios({ iniciativaId }: { iniciativaId: string }): ReactNode {
   const { user } = useAuth();
   const { data, isLoading, isError, error } = useComentarios(iniciativaId);
@@ -79,7 +92,7 @@ export function IniciativaComentarios({ iniciativaId }: { iniciativaId: string }
                 </>
               )}
             </div>
-            <div className="painel-coment__texto">{c.texto}</div>
+            <div className="painel-coment__texto">{comMencoes(c.texto)}</div>
             {c.anexo_url &&
               (urlHttpSegura(c.anexo_url) ? (
                 <a

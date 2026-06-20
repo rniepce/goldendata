@@ -30,6 +30,9 @@ import type {
   ChatTurno,
   CockpitData,
   CopilotoResposta,
+  Deliberacao,
+  DeliberacaoDetalhe,
+  DeliberacaoInput,
   Comentario,
   ComentarioInput,
   Demanda,
@@ -70,6 +73,7 @@ import type {
   ToolVersion,
   ToolVersionInput,
   UserInfo,
+  Voto,
 } from './types';
 
 const API_BASE = `${env.apiUrl}/api`;
@@ -337,6 +341,19 @@ export const api = {
 
   // Cockpit de pendências do comitê
   cockpit: (): Promise<CockpitData> => request('/cockpit'),
+
+  // Deliberações com voto (#38)
+  listDeliberacoes: (status?: string): Promise<Deliberacao[]> =>
+    request('/deliberacoes', { query: { status } }),
+  getDeliberacao: (id: string): Promise<DeliberacaoDetalhe> => request(`/deliberacoes/${id}`),
+  createDeliberacao: (input: DeliberacaoInput): Promise<Deliberacao> =>
+    request('/deliberacoes', { method: 'POST', body: input }),
+  registrarVoto: (
+    id: string,
+    input: { membro_email: string; membro_nome?: string | null; valor: string },
+  ): Promise<Voto> => request(`/deliberacoes/${id}/votos`, { method: 'POST', body: input }),
+  encerrarDeliberacao: (id: string, resultado?: string): Promise<Deliberacao> =>
+    request(`/deliberacoes/${id}/encerrar`, { method: 'POST', body: { resultado } }),
 
   // Balcão de demandas (#37)
   listDemandas: (status?: string): Promise<Demanda[]> =>

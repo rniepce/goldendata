@@ -21,7 +21,9 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/painel', label: 'Painel' },
   { to: '/cockpit', label: 'Cockpit' },
   { to: '/demandas', label: 'Demandas' },
+  { to: '/deliberacoes', label: 'Deliberações' },
   { to: '/encaminhamentos', label: 'Encaminhamentos' },
+  { to: '/carga', label: 'Carga da equipe' },
   { to: '/busca', label: 'Busca' },
   {
     to: '/copiloto',
