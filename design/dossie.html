@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>goldendata — direção "Dossiê Institucional"</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Libre+Franklin:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root{
+    --paper:#f1e9da;        /* parchment page */
+    --surface:#fbf6ec;      /* document surface */
+    --ink:#1d1a14;          /* warm near-black */
+    --muted:#71685a;        /* warm gray */
+    --navy:#11233d;         /* deep institutional ink */
+    --ox:#7a1e2b;           /* oxblood — robes, seals, brand accent */
+    --forest:#2f5d3a;       /* baixo risco */
+    --amber:#8a5a00;        /* atenção */
+    --line:#d9cdb6;         /* hairline */
+    --line-2:#bcae92;       /* stronger hairline */
+    --brass:#b3923f;
+    --serif:'Fraunces',Georgia,serif;
+    --sans:'Libre Franklin',system-ui,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    /* ledger texture + grain */
+    background-image:
+      repeating-linear-gradient(0deg, transparent 0 31px, rgba(17,35,61,.035) 31px 32px),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  }
+
+  .wrap{max-width:1000px;margin:0 auto;padding:40px 48px 72px}
+
+  /* reveal */
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  @keyframes draw{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  .r{opacity:0;animation:rise .8s cubic-bezier(.2,.7,.2,1) forwards}
+  @media (prefers-reduced-motion:reduce){.r{animation:none;opacity:1}}
+
+  /* ---- masthead ---- */
+  .mast{display:flex;align-items:flex-end;justify-content:space-between;gap:24px}
+  .brand{font-family:var(--serif);font-weight:600;font-size:34px;letter-spacing:-.01em;line-height:1;color:var(--navy)}
+  .brand .dot{color:var(--ox)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-top:10px}
+  .seal{display:flex;align-items:center;gap:14px}
+  .stamp{
+    font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--ox);border:1.5px solid var(--ox);border-radius:2px;padding:5px 9px;
+  }
+  .who{font-size:13px;text-align:right;line-height:1.35}
+  .who b{font-weight:600}
+  .who span{color:var(--muted)}
+
+  .rule{height:2px;background:var(--navy);transform-origin:left;margin:18px 0 0;animation:draw 1s cubic-bezier(.2,.7,.2,1) forwards}
+  .rule.brass{height:1px;background:var(--brass);margin-top:4px;animation-delay:.15s;opacity:.8}
+  .hair{height:1px;background:var(--line);border:0;margin:0}
+
+  /* ---- record header ---- */
+  .record{position:relative;margin-top:40px}
+  .ghost{position:absolute;right:-6px;top:-46px;font-family:var(--serif);font-weight:600;font-size:150px;line-height:1;color:rgba(122,30,43,.07);user-select:none;pointer-events:none}
+  .kicker{font-family:var(--mono);font-size:13px;letter-spacing:.06em;color:var(--ox);font-weight:500}
+  .kicker .sep{color:var(--line-2);margin:0 8px}
+  .title{font-family:var(--serif);font-weight:500;font-size:46px;line-height:1.04;letter-spacing:-.015em;margin:12px 0 0;max-width:16ch;color:var(--ink)}
+  .classline{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:20px}
+  .chip{font-family:var(--mono);font-size:12px;letter-spacing:.04em;padding:5px 11px;border-radius:2px;text-transform:uppercase}
+  .chip--baixo{color:var(--forest);border:1.5px solid var(--forest);background:#eef3ea}
+  .chip--prod{color:var(--navy);border:1px solid var(--line-2)}
+  .meta-inline{font-size:13px;color:var(--muted)}
+  .meta-inline b{color:var(--ink);font-weight:500}
+
+  /* ---- at-a-glance ledger ---- */
+  .glance{display:grid;grid-template-columns:repeat(4,1fr);margin-top:36px;border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2)}
+  .glance > div{padding:18px 22px;border-left:1px solid var(--line)}
+  .glance > div:first-child{border-left:0;padding-left:0}
+  .g-num{font-family:var(--serif);font-weight:500;font-size:38px;line-height:1;color:var(--navy)}
+  .g-num.ox{color:var(--ox)}
+  .g-lab{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:10px}
+
+  /* ---- parecer (editorial pull) ---- */
+  .parecer{margin-top:44px;display:grid;grid-template-columns:max-content 1fr;gap:26px}
+  .parecer .sect{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg);border-right:1.5px solid var(--ox);padding-right:14px}
+  .lead{font-family:var(--serif);font-style:italic;font-weight:400;font-size:23px;line-height:1.5;color:var(--ink);margin:0;max-width:60ch}
+  .lead b{font-style:normal;font-weight:600;color:var(--ox)}
+  .foot{font-size:12px;color:var(--muted);margin-top:16px;display:flex;align-items:center;gap:8px}
+  .foot .k{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--line-2);border-radius:2px;padding:2px 7px}
+
+  /* ---- dossier meta grid ---- */
+  .grid{display:grid;grid-template-columns:1fr 1fr;column-gap:48px;margin-top:48px}
+  .field{padding:14px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:16px;align-items:baseline}
+  .f-lab{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .f-val{font-family:var(--mono);font-size:14px;color:var(--ink);text-align:right}
+  .f-val.navy{color:var(--navy)}
+
+  .colophon{margin-top:42px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+  .colophon .hash{color:var(--line-2)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+
+    <header class="mast r" style="animation-delay:.05s">
+      <div>
+        <div class="brand">goldendata<span class="dot">.</span></div>
+        <div class="eyebrow">Registro institucional de IA · Tribunal de Justiça de Minas Gerais</div>
+      </div>
+      <div class="seal">
+        <span class="stamp">Produção · GEX-IA</span>
+        <div class="who"><b>Rafael Niepce</b><br><span>Coordenador do Comitê</span></div>
+      </div>
+    </header>
+    <div class="rule r" style="animation-delay:.05s"></div>
+    <div class="rule brass r" style="animation-delay:.1s"></div>
+
+    <section class="record">
+      <div class="ghost r" style="animation-delay:.5s">17</div>
+      <div class="kicker r" style="animation-delay:.18s">DOS-17<span class="sep">/</span>FICHA TÉCNICA<span class="sep">/</span>CNJ 615·2025</div>
+      <h1 class="title r" style="animation-delay:.24s">SAREF — Apresentação remota por reconhecimento facial</h1>
+      <div class="classline r" style="animation-delay:.3s">
+        <span class="chip chip--baixo">● Baixo risco · BR5</span>
+        <span class="chip chip--prod">Em produção</span>
+        <span class="meta-inline">Unidade responsável&nbsp; <b>GMF</b></span>
+      </div>
+    </section>
+
+    <section class="glance r" style="animation-delay:.36s">
+      <div><div class="g-num">3</div><div class="g-lab">Versões registradas</div></div>
+      <div><div class="g-num">8</div><div class="g-lab">Itens de inventário</div></div>
+      <div><div class="g-num ox">5</div><div class="g-lab">Riscos mapeados</div></div>
+      <div><div class="g-num">02·26</div><div class="g-lab">Próxima revisão</div></div>
+    </section>
+
+    <section class="parecer r" style="animation-delay:.44s">
+      <div class="sect">Parecer · IA</div>
+      <div>
+        <p class="lead">O SAREF substitui a apresentação presencial periódica por reconhecimento facial biométrico com geolocalização. Registrado como <b>baixo risco (BR5)</b>, demanda atenção contínua a direitos fundamentais, privacidade e mitigação de viés algorítmico.</p>
+        <div class="foot"><span class="k">DeepSeek-V4-Pro</span> Texto de apoio — a decisão e a validação permanecem humanas.</div>
+      </div>
+    </section>
+
+    <section class="grid r" style="animation-delay:.5s">
+      <div class="field"><span class="f-lab">Código institucional</span><span class="f-val navy">DOS-17</span></div>
+      <div class="field"><span class="f-lab">Estágio GEX-IA</span><span class="f-val">Em uso</span></div>
+      <div class="field"><span class="f-lab">Processo SEI</span><span class="f-val">0073601-31.2026</span></div>
+      <div class="field"><span class="f-lab">Base legal</span><span class="f-val">Res. CNJ 615/2025</span></div>
+      <div class="field"><span class="f-lab">Analista responsável</span><span class="f-val">V. Mulin Leal</span></div>
+      <div class="field"><span class="f-lab">Última análise</span><span class="f-val">19·06·2026</span></div>
+    </section>
+
+    <div class="colophon r" style="animation-delay:.58s">
+      <span>Trilha de auditoria · encadeamento SHA-256</span>
+      <span class="hash">#a262ce…b3812</span>
+    </div>
+
+  </div>
+</body>
+</html>

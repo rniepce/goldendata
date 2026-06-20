@@ -249,8 +249,8 @@
   padding: var(--gd-space-3);
   border-left: 4px solid var(--kpi-cor, var(--gd-color-primary));
 }
-.painel-kpi__num { font-size: 1.7rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
-.painel-kpi__label { font-size: var(--gd-font-size-sm); color: var(--gd-color-text-muted); margin-top: 0.25rem; }
+.painel-kpi__num { font-family: var(--gd-font-serif); font-size: 2rem; font-weight: 500; font-optical-sizing: auto; line-height: 1; font-variant-numeric: tabular-nums; }
+.painel-kpi__label { font-family: var(--gd-font-mono); font-size: var(--gd-font-size-xs); text-transform: uppercase; letter-spacing: 0.07em; color: var(--gd-color-text-muted); margin-top: 0.4rem; }
 
 /* Calendário */
 .painel-cal__head {

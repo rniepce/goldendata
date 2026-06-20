@@ -5,37 +5,45 @@
  */
 
 :root {
-  /* Cores institucionais TJMG (azul sóbrio) */
-  --gd-color-primary: #14387f;        /* azul institucional */
-  --gd-color-primary-strong: #0e2a61;
-  --gd-color-primary-soft: #e7eef9;
-  --gd-color-primary-contrast: #ffffff;
+  /* Direção "Dossiê Institucional": pergaminho + tinta naval + oxblood.
+     Todos os pares de texto verificados >= 4.5:1 (WCAG AA). */
+  --gd-color-primary: #13294b;        /* tinta naval institucional */
+  --gd-color-primary-strong: #0d1d38;
+  --gd-color-primary-soft: #e6e9f0;
+  --gd-color-primary-contrast: #fbf7ef;
 
-  --gd-color-bg: #f4f6fa;
-  --gd-color-surface: #ffffff;
-  --gd-color-surface-alt: #f8fafc;
-  --gd-color-border: #d4dae3;
-  --gd-color-border-strong: #aab4c2;
+  /* Acento oxblood — toga/selo; estados ativos e detalhes de marca */
+  --gd-color-accent: #7a1e2b;
+  --gd-color-accent-soft: #efe1de;
 
-  --gd-color-text: #1b2330;          /* contraste AA sobre surface */
-  --gd-color-text-muted: #52607a;    /* >= 4.5:1 sobre surface */
-  --gd-color-text-inverse: #ffffff;
+  --gd-color-bg: #f1ece1;             /* pergaminho (página) */
+  --gd-color-surface: #fbf7ef;        /* documento */
+  --gd-color-surface-alt: #f5efe2;
+  --gd-color-border: #d8cdb8;
+  --gd-color-border-strong: #bcae92;
 
-  /* Estados semânticos (todos AA sobre branco) */
-  --gd-color-success: #1d6b3b;
-  --gd-color-success-soft: #e3f3e9;
+  --gd-color-text: #1f1c16;          /* tinta quase-preta quente (15.9:1) */
+  --gd-color-text-muted: #5f5749;    /* 6.7:1 sobre surface */
+  --gd-color-text-inverse: #fbf7ef;
+
+  /* Estados semânticos (tons arquivísticos; todos AA sobre surface e soft) */
+  --gd-color-success: #2f5d3a;
+  --gd-color-success-soft: #e7efe5;
   --gd-color-warning: #8a5a00;
-  --gd-color-warning-soft: #fbf0d8;
+  --gd-color-warning-soft: #f6ecd6;
   --gd-color-danger: #a31621;
-  --gd-color-danger-soft: #fbe4e6;
-  --gd-color-info: #14387f;
-  --gd-color-info-soft: #e7eef9;
+  --gd-color-danger-soft: #f5e2df;
+  --gd-color-info: #13294b;
+  --gd-color-info-soft: #e6e9f0;
 
   /* Foco visível (acessibilidade — navegação por teclado) */
-  --gd-focus-ring: #0b62d6;
+  --gd-focus-ring: #7a1e2b;
 
-  /* Tipografia legível */
-  --gd-font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, system-ui, sans-serif;
+  /* Tipografia: serifa display (autoridade) + gótica editorial (corpo) +
+     mono para o dado-registro (códigos, processos, hashes). */
+  --gd-font-serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --gd-font-family: 'Libre Franklin', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --gd-font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   --gd-font-size-xs: 0.75rem;
   --gd-font-size-sm: 0.8125rem;
   --gd-font-size-base: 0.9375rem;
@@ -63,13 +71,13 @@
   --gd-shadow-xl: -8px 0 24px rgba(16, 24, 40, 0.15);
 
   /* Superfície sutil (colunas de kanban, células fora do mês, blocos de leitura) */
-  --gd-color-bg-subtle: #eef1f6;
+  --gd-color-bg-subtle: #ece5d6;
 
   /* Cores da faixa de KPIs / status de iniciativas (antes hardcoded em KpiBar) */
-  --gd-color-kpi-total: #14387f;
+  --gd-color-kpi-total: #13294b;
   --gd-color-kpi-andamento: #0e7490;
-  --gd-color-kpi-afazer: #52607a;
-  --gd-color-kpi-concluido: #1d6b3b;
+  --gd-color-kpi-afazer: #8a7f6a;
+  --gd-color-kpi-concluido: #2f5d3a;
   --gd-color-kpi-atrasado: #a31621;
 
   --gd-sidebar-width: 248px;
@@ -92,13 +100,19 @@ body {
   font-size: var(--gd-font-size-base);
   line-height: var(--gd-line-height);
   color: var(--gd-color-text);
-  background: var(--gd-color-bg);
+  background-color: var(--gd-color-bg);
+  /* grão de papel sutil — atmosfera arquivística sem prejudicar a leitura */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
   -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3, h4 {
+  font-family: var(--gd-font-serif);
+  font-weight: 500;
+  font-optical-sizing: auto;
+  letter-spacing: -0.01em;
   color: var(--gd-color-text);
-  line-height: 1.25;
+  line-height: 1.2;
   margin: 0 0 var(--gd-space-3);
 }
 
@@ -177,11 +191,13 @@ p { margin: 0 0 var(--gd-space-3); }
 }
 
 .gd-sidebar__brand {
-  font-size: var(--gd-font-size-lg);
-  font-weight: 700;
+  font-family: var(--gd-font-serif);
+  font-size: var(--gd-font-size-xl);
+  font-weight: 600;
+  font-optical-sizing: auto;
   color: var(--gd-color-text-inverse);
   padding: var(--gd-space-2) var(--gd-space-2) var(--gd-space-4);
-  letter-spacing: 0.02em;
+  letter-spacing: -0.01em;
 }
 
 .gd-nav {
@@ -341,7 +357,7 @@ p { margin: 0 0 var(--gd-space-3); }
   color: var(--gd-color-text);
   width: 100%;
 }
-.gd-textarea { min-height: 96px; resize: vertical; font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; }
+.gd-textarea { min-height: 96px; resize: vertical; font-family: var(--gd-font-mono); }
 .gd-input:disabled,
 .gd-select:disabled,
 .gd-textarea:disabled { background: var(--gd-color-surface-alt); color: var(--gd-color-text-muted); }
@@ -487,16 +503,17 @@ p { margin: 0 0 var(--gd-space-3); }
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: var(--gd-space-3) var(--gd-space-5);
 }
-.gd-meta__label { font-size: var(--gd-font-size-xs); color: var(--gd-color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.gd-meta__label { font-family: var(--gd-font-mono); font-size: var(--gd-font-size-xs); color: var(--gd-color-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
 .gd-meta__value { font-size: var(--gd-font-size-sm); }
 
 .gd-env-flag {
+  font-family: var(--gd-font-mono);
   font-size: var(--gd-font-size-xs);
-  font-weight: 700;
+  font-weight: 500;
   padding: 2px var(--gd-space-2);
   border-radius: var(--gd-radius-sm);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
 }
 .gd-env-flag--prod { background: var(--gd-color-danger-soft); color: var(--gd-color-danger); }
 .gd-env-flag--homolog { background: var(--gd-color-warning-soft); color: var(--gd-color-warning); }
@@ -523,12 +540,12 @@ p { margin: 0 0 var(--gd-space-3); }
   border-radius: var(--gd-radius-lg);
   padding: var(--gd-space-4);
 }
-.gd-kpi__value { font-size: var(--gd-font-size-2xl); font-weight: 700; color: var(--gd-color-primary); }
-.gd-kpi__label { font-size: var(--gd-font-size-xs); color: var(--gd-color-text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+.gd-kpi__value { font-family: var(--gd-font-serif); font-size: var(--gd-font-size-2xl); font-weight: 500; font-optical-sizing: auto; color: var(--gd-color-primary); }
+.gd-kpi__label { font-family: var(--gd-font-mono); font-size: var(--gd-font-size-xs); color: var(--gd-color-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
 
 .gd-stack { display: flex; flex-direction: column; gap: var(--gd-space-4); }
 .gd-row { display: flex; gap: var(--gd-space-3); flex-wrap: wrap; align-items: center; }
-.gd-mono { font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-size: var(--gd-font-size-xs); }
+.gd-mono { font-family: var(--gd-font-mono); font-size: var(--gd-font-size-xs); }
 .gd-timeline { list-style: none; padding: 0; margin: 0; border-left: 2px solid var(--gd-color-border); }
 .gd-timeline li { position: relative; padding: 0 0 var(--gd-space-4) var(--gd-space-5); }
 .gd-timeline li::before {
