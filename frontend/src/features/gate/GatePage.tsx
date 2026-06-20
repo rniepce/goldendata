@@ -5,21 +5,30 @@
  */
 
 import { useState, type FormEvent, type ReactNode } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { useAuth, hasAnyRole } from '../../lib/auth-oidc';
 import { useCreateGate, useDecideGate } from '../../lib/queries';
-import { ApiError } from '../../lib/api';
+import { ApiError, api } from '../../lib/api';
 import {
   Badge,
   Card,
   ErrorAlert,
   InfoAlert,
+  Loading,
+  Markdown,
   PageHeader,
   SuccessAlert,
   TextAreaField,
   TextField,
 } from '../../components/ui';
+import { VEDACOES_ITENS } from '../../lib/options';
 import { parseJsonObject } from '../../lib/json';
 import type { Gate, GateInput } from '../../lib/types';
+
+function vedacaoLabel(chave: string | null): string {
+  const item = VEDACOES_ITENS.find((v) => v.chave === chave);
+  return item ? item.rotulo : `Uso vedado: ${chave ?? '—'}`;
+}
 
 export function GatePage(): ReactNode {
   const { user } = useAuth();
@@ -121,6 +130,8 @@ function ConfigGateForm({
 }
 
 function GateChecks({ gate }: { gate: Gate }): ReactNode {
+  const explicar = useMutation({ mutationFn: () => api.explicarGate(gate.id) });
+  const bloqueios = gate.bloqueios ?? [];
   return (
     <Card title="Decisão automática (checks objetivos)">
       <div className="gd-row" style={{ marginBottom: '1rem' }}>
@@ -134,6 +145,18 @@ function GateChecks({ gate }: { gate: Gate }): ReactNode {
           </Badge>
         )}
       </div>
+
+      {bloqueios.length > 0 && (
+        <div className="gd-alert gd-alert--warning" role="alert" style={{ marginBottom: '1rem' }}>
+          <strong>Bloqueios de conformidade (fail-closed):</strong>
+          <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.2rem' }}>
+            {bloqueios.map((b, i) => (
+              <li key={i}>{b.tipo === 'vedacao' ? vedacaoLabel(b.chave) : b.detalhe}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <table className="gd-table">
         <thead>
           <tr>
@@ -158,6 +181,24 @@ function GateChecks({ gate }: { gate: Gate }): ReactNode {
           ))}
         </tbody>
       </table>
+
+      <div className="gd-row" style={{ marginTop: '1rem' }}>
+        <button
+          type="button"
+          className="gd-btn gd-btn--secondary gd-btn--sm"
+          onClick={() => explicar.mutate()}
+          disabled={explicar.isPending}
+        >
+          {explicar.isPending ? 'Explicando…' : 'Explicar decisão (IA)'}
+        </button>
+      </div>
+      {explicar.isPending && <Loading label="Consultando a IA…" />}
+      {explicar.isError && <ErrorAlert error={explicar.error} />}
+      {explicar.data && (
+        <div className="gd-md--panel" style={{ marginTop: 'var(--gd-space-3)' }}>
+          <Markdown text={explicar.data.explicacao} />
+        </div>
+      )}
     </Card>
   );
 }

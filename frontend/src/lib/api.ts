@@ -27,6 +27,7 @@ import type {
   GoldenDatasetInput,
   ChatResposta,
   ChatTurno,
+  CockpitData,
   Comentario,
   ComentarioInput,
   ConformidadeResultado,
@@ -52,6 +53,7 @@ import type {
   Tool,
   ToolFicha,
   ToolInput,
+  ToolUpdateInput,
   ToolVersion,
   ToolVersionInput,
   UserInfo,
@@ -195,6 +197,8 @@ export const api = {
   listTools: (): Promise<Tool[]> => request('/registry/tools'),
   createTool: (input: ToolInput): Promise<Tool> =>
     request('/registry/tools', { method: 'POST', body: input }),
+  updateTool: (toolId: string, input: ToolUpdateInput): Promise<Tool> =>
+    request(`/registry/tools/${toolId}`, { method: 'PATCH', body: input }),
   getToolFicha: (toolId: string): Promise<ToolFicha> =>
     request(`/registry/tools/${toolId}/ficha`),
 
@@ -266,6 +270,10 @@ export const api = {
     requestForm('/ia/redigir-resposta-sei', form),
   extrairCard: (form: FormData): Promise<ExtracaoCard> => requestForm('/ia/extrair-card', form),
   planoPessoal: (): Promise<PlanoPessoal> => request('/ia/plano-pessoal'),
+  explicarGate: (
+    gateId: string,
+  ): Promise<{ gate_id: string; veredito: string; explicacao: string }> =>
+    request(`/ia/explicar-gate/${gateId}`),
 
   // Iniciativas do GEX-IA (Painel)
   listIniciativas: (params?: {
@@ -288,6 +296,9 @@ export const api = {
     request(`/iniciativas/comentarios/${comentarioId}`, { method: 'PATCH', body: { resolvido } }),
   deleteComentario: (comentarioId: string): Promise<void> =>
     request(`/iniciativas/comentarios/${comentarioId}`, { method: 'DELETE' }),
+
+  // Cockpit de pendências do comitê
+  cockpit: (): Promise<CockpitData> => request('/cockpit'),
 
   // Base de conhecimento (corpus do RAG)
   listDocumentos: (params?: { tipo?: string; q?: string }): Promise<Documento[]> =>

@@ -25,6 +25,7 @@ import { PromptVersionForm } from './PromptVersionForm';
 import { ToolVersionForm } from './ToolVersionForm';
 import { DataInventoryForm } from './DataInventoryForm';
 import { ConformidadeCard } from './ConformidadeCard';
+import { DossieEditForm } from './DossieEditForm';
 
 type SectionId =
   | 'identificacao'
@@ -60,6 +61,7 @@ export function ToolDetailPage(): ReactNode {
   const { user } = useAuth();
   const { data, isLoading, isError, error } = useToolFicha(id);
   const [active, setActive] = useState<SectionId>('identificacao');
+  const [editandoDossie, setEditandoDossie] = useState(false);
 
   const podeEditar = hasAnyRole(user, 'owner_ferramenta', 'coordenador_comite', 'admin');
   const resumoIa = useMutation({ mutationFn: () => api.resumirFerramenta(id ?? '') });
@@ -222,7 +224,24 @@ export function ToolDetailPage(): ReactNode {
         )}
 
         {active === 'governanca' && (
-          <Card title="Dossiê de Governança — GEX-IA / CIAR (CNJ 615/2025)">
+          <Card
+            title="Dossiê de Governança — GEX-IA / CIAR (CNJ 615/2025)"
+            actions={
+              podeEditar && (
+                <button
+                  type="button"
+                  className="gd-btn gd-btn--secondary gd-btn--sm"
+                  onClick={() => setEditandoDossie((v) => !v)}
+                >
+                  {editandoDossie ? 'Cancelar' : 'Editar dossiê'}
+                </button>
+              )
+            }
+          >
+            {editandoDossie ? (
+              <DossieEditForm tool={ferramenta} onDone={() => setEditandoDossie(false)} />
+            ) : (
+              <>
             <div className="gd-meta-grid" style={{ marginBottom: '1rem' }}>
               <MetaItem label="Nº Dossiê"><span className="gd-code">{ferramenta.codigo_institucional}</span></MetaItem>
               <MetaItem label="Categoria de risco CNJ 615">
@@ -263,6 +282,8 @@ export function ToolDetailPage(): ReactNode {
               <p style={{ marginTop: '1rem', fontSize: '0.85rem', opacity: 0.7 }}>
                 Proveniência do registro: {ferramenta.origem_registro}
               </p>
+            )}
+              </>
             )}
           </Card>
         )}

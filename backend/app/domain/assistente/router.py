@@ -13,9 +13,10 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
 from app.core import doctext, ia, rag
-from app.core.db import fetch_all
+from app.core.db import fetch_all, fetch_one
 from app.core.deps import Ctx, get_ctx
 from app.core.security_keycloak import require_role
+from app.domain.evaluation.gate import evaluate_gate
 from app.domain.registry import service as registry_svc
 
 from . import conformidade
@@ -266,6 +267,45 @@ def conformidade_ferramenta(tool_id: str, ctx: Ctx = Depends(get_ctx), _=Depends
         except (RuntimeError, ValueError):
             pass  # narração é opcional; o veredito é o checklist
     return resultado
+
+
+# ---------------- IA: explicar a decisão do gate (#58) ----------------
+@router.get("/ia/explicar-gate/{gate_id}")
+def explicar_gate(gate_id: str, ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
+    gate = fetch_one(ctx.conn, "SELECT * FROM promotion_gate WHERE id = %s", (gate_id,))
+    if gate is None:
+        raise HTTPException(404, "Gate não encontrado")
+    exigidas = gate.get("metricas_exigidas") or {}
+    obtidas = gate.get("metricas_obtidas") or {}
+    bloqueios = gate.get("bloqueios") or []
+    decision = evaluate_gate(exigidas, obtidas)
+    checks_txt = (
+        "\n".join(
+            f"- {c.metrica}: exigido {c.threshold}, obtido {c.obtido} → "
+            f"{'passou' if c.passou else 'reprovou'}"
+            for c in decision.checks
+        )
+        or "(sem métricas exigidas)"
+    )
+    bloq_txt = "\n".join(f"- {b.get('detalhe')}" for b in bloqueios) or "(nenhum)"
+    veredito = "aprovado" if (decision.aprovado and not bloqueios) else "reprovado"
+    system = (
+        "Você é analista de governança de IA do TJMG. Explique, em 3-5 linhas e linguagem "
+        "objetiva, por que o gate de promoção desta versão ficou com este veredito: qual(is) "
+        "métrica(s) ou bloqueio(s) de conformidade determinaram o resultado e o que aproximaria "
+        "a versão da aprovação. Não invente critérios além dos listados. " + _CNJ_RISCO
+    )
+    user = (
+        f"VEREDITO AUTOMÁTICO: {veredito}\n\nCHECKS DE MÉTRICAS:\n{checks_txt}\n\n"
+        f"BLOQUEIOS DE CONFORMIDADE:\n{bloq_txt}"
+    )
+    try:
+        explicacao = ia.chamar(system, user, max_tokens=500)
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    return {"gate_id": gate_id, "veredito": veredito, "explicacao": explicacao}
 
 
 # ---------------- IA: ingestão de documento (SEI) — #76 e #77 ----------------

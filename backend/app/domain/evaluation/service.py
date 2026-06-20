@@ -9,7 +9,7 @@ from app.core.db import execute, fetch_all, fetch_one
 from app.metrics import levenshtein, normalized_similarity
 
 from . import schemas
-from .gate import HIGHER_IS_BETTER, evaluate_gate
+from .gate import HIGHER_IS_BETTER, compliance_blocks, evaluate_gate
 from .metrics_runner import CasePair, aggregate, score_case
 
 
@@ -278,17 +278,50 @@ def list_kpi(conn: Any, tool_id: str) -> list[dict]:
 # --------------------------------------------------------------------------- #
 # Gate de promoção a produção
 # --------------------------------------------------------------------------- #
+def _tool_compliance(conn: Any, version_id: str) -> list[dict]:
+    """Apura os bloqueios de conformidade da ferramenta dona da versão."""
+    tv = fetch_one(conn, "SELECT tool_id FROM tool_version WHERE id = %s", (version_id,))
+    if tv is None:
+        return []
+    tool_id = tv["tool_id"]
+    tool = fetch_one(conn, "SELECT vedacoes_checklist FROM tool WHERE id = %s", (tool_id,)) or {}
+    inventario = fetch_all(conn, "SELECT ripd_requerido FROM data_inventory WHERE tool_id = %s", (tool_id,))
+    anexos = fetch_all(conn, "SELECT tipo FROM attachment WHERE tool_id = %s", (tool_id,))
+    anexos_tipos = {a["tipo"] for a in anexos if a.get("tipo")}
+    return compliance_blocks(tool.get("vedacoes_checklist"), inventario, anexos_tipos)
+
+
+def _gate_response(row: dict) -> dict:
+    """Contrato consistente do gate para o front: recompõe checks e o resultado
+    automático a partir das métricas e bloqueios persistidos."""
+    exigidas = row.get("metricas_exigidas") or {}
+    obtidas = row.get("metricas_obtidas") or {}
+    bloqueios = row.get("bloqueios") or []
+    decision = evaluate_gate(exigidas, obtidas)
+    return row | {
+        "checks": [c.as_dict() for c in decision.checks],
+        "bloqueios": bloqueios,
+        "aprovado_automatico": decision.aprovado and not bloqueios,
+        # Decisão final só existe após homologação humana (aprovador registrado).
+        "decisao": row.get("resultado") if row.get("aprovador_sub") else None,
+    }
+
+
 def create_gate(conn: Any, body: schemas.GateCreate, version_id: str) -> dict:
     agg = compute_aggregate(conn, body.eval_run_id)
     decision = evaluate_gate(body.metricas_exigidas, agg)
-    return execute(
+    bloqueios = _tool_compliance(conn, version_id)
+    # Fail-closed: qualquer bloqueio de conformidade reprova, independente das métricas.
+    resultado = decision.resultado if (decision.aprovado and not bloqueios) else "reprovado"
+    row = execute(
         conn,
         """INSERT INTO promotion_gate (tool_version_id, eval_run_id, metricas_exigidas,
-              metricas_obtidas, resultado)
-           VALUES (%s,%s,%s,%s,%s) RETURNING *""",
+              metricas_obtidas, resultado, bloqueios)
+           VALUES (%s,%s,%s,%s,%s,%s) RETURNING *""",
         (version_id, body.eval_run_id, Jsonb(body.metricas_exigidas),
-         Jsonb(agg), decision.resultado),
-    ) | {"checks": [c.as_dict() for c in decision.checks]}
+         Jsonb(agg), resultado, Jsonb(bloqueios)),
+    )
+    return _gate_response(row)
 
 
 def decide_gate(conn: Any, gate_id: str, body: schemas.GateDecide, aprovador_sub: str) -> dict:
@@ -320,4 +353,4 @@ def decide_gate(conn: Any, gate_id: str, body: schemas.GateDecide, aprovador_sub
                WHERE id = (SELECT tool_id FROM tool_version WHERE id=%s)""",
             (gate["tool_version_id"],),
         )
-    return updated
+    return _gate_response(updated)

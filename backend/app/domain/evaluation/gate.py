@@ -64,6 +64,37 @@ def _passes(metrica: str, threshold: float, obtido: float | None) -> bool:
     return obtido <= threshold
 
 
+def compliance_blocks(
+    vedacoes: dict | None, inventario: list[dict], anexos_tipos: set[str]
+) -> list[dict]:
+    """Bloqueios de conformidade que barram a promoção (fail-closed), além das
+    métricas: usos vedados aplicáveis (CNJ 615 Art. 10) e RIPD/AIA requerido e
+    ausente (Art. 14 / LGPD Art. 38). Lógica pura e testável.
+
+    Cada item: {tipo, chave, detalhe}.
+    """
+    blocks: list[dict] = []
+    for chave, aplicavel in (vedacoes or {}).items():
+        if aplicavel:
+            blocks.append(
+                {
+                    "tipo": "vedacao",
+                    "chave": chave,
+                    "detalhe": f"Uso vedado aplicável (CNJ 615 Art. 10): {chave}.",
+                }
+            )
+    ripd_requerido = any(d.get("ripd_requerido") for d in inventario)
+    if ripd_requerido and not ({"ripd", "aia"} & anexos_tipos):
+        blocks.append(
+            {
+                "tipo": "ripd",
+                "chave": None,
+                "detalhe": "RIPD/AIA requerido pelo inventário e não anexado (Art. 14 / LGPD Art. 38).",
+            }
+        )
+    return blocks
+
+
 def evaluate_gate(metricas_exigidas: dict[str, float], metricas_obtidas: dict[str, float]) -> GateDecision:
     """Aprova somente se TODAS as métricas exigidas satisfizerem seus thresholds.
 

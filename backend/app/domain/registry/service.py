@@ -63,6 +63,28 @@ def get_tool(conn: Any, tool_id: str) -> dict | None:
     return fetch_one(conn, "SELECT * FROM tool WHERE id = %s", (tool_id,))
 
 
+_TOOL_JSONB = {"vedacoes_checklist", "riscos_identificados"}
+
+
+def update_tool(conn: Any, tool_id: str, body: schemas.ToolUpdate) -> dict | None:
+    """Atualização parcial da ficha/dossiê. A trigger trg_audit_tool registra a
+    mudança na trilha de auditoria."""
+    campos = body.model_dump(exclude_unset=True)
+    if not campos:
+        return get_tool(conn, tool_id)
+    sets, params = [], []
+    for k, v in campos.items():
+        sets.append(f"{k} = %s")
+        params.append(Jsonb(v) if k in _TOOL_JSONB else v)
+    sets.append("atualizado_em = now()")  # tool não tem touch trigger
+    params.append(tool_id)
+    return execute(
+        conn,
+        f"UPDATE tool SET {', '.join(sets)} WHERE id = %s RETURNING *",  # noqa: S608 (chaves do schema)
+        tuple(params),
+    )
+
+
 def get_ficha_tecnica(conn: Any, tool_id: str) -> dict | None:
     """Visão consolidada da ficha técnica: ferramenta + dados + versões + riscos + anexos.
 

@@ -21,6 +21,7 @@ import type {
   RoleAssignmentInput,
   RubricInput,
   ToolInput,
+  ToolUpdateInput,
   ToolVersionInput,
 } from './types';
 
@@ -216,6 +217,42 @@ export function useCreateTool() {
   return useMutation({
     mutationFn: (input: ToolInput) => api.createTool(input),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.tools }),
+  });
+}
+
+export function useUpdateTool(toolId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: ToolUpdateInput) => api.updateTool(toolId, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.toolFicha(toolId) });
+      qc.invalidateQueries({ queryKey: queryKeys.tools });
+    },
+  });
+}
+
+export function useUpdateToolStage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, estagio }: { id: string; estagio: string }) =>
+      api.updateTool(id, { estagio_gexia: estagio }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.tools }),
+  });
+}
+
+export function useCockpit() {
+  return useQuery({ queryKey: ['cockpit'], queryFn: api.cockpit });
+}
+
+export function useRegistrarRevisao() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, proxima }: { id: string; proxima: string }) =>
+      api.updateTool(id, { proxima_revisao_em: proxima }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cockpit'] });
+      qc.invalidateQueries({ queryKey: queryKeys.tools });
+    },
   });
 }
 

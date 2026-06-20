@@ -217,6 +217,45 @@ export interface PlanoPessoal {
   resumo_ia?: string;
 }
 
+// ---------- Cockpit de pendências do comitê (#13) ----------
+export interface CockpitData {
+  gates_aguardando: { gate_id: string; tool_nome: string; versao: string; criado_em: string }[];
+  revisoes: {
+    tool_id: string;
+    codigo: string;
+    nome: string;
+    proxima_revisao_em: string;
+    vencida: boolean;
+  }[];
+  ripd_pendente: { tool_id: string; codigo: string; nome: string }[];
+  incidentes_abertos: {
+    id: string;
+    tool_nome: string;
+    identificado_em: string | null;
+    prazo_72h_cumprido: boolean | null;
+  }[];
+  comentarios_abertos: {
+    iniciativa_id: string;
+    iniciativa_titulo: string;
+    texto: string;
+    criado_em: string;
+  }[];
+  iniciativas_atrasadas: {
+    id: string;
+    titulo: string;
+    prazo: string;
+    responsavel_nome: string | null;
+  }[];
+  contadores: {
+    gates: number;
+    revisoes: number;
+    ripd: number;
+    incidentes: number;
+    comentarios: number;
+    iniciativas: number;
+  };
+}
+
 // ---------- Registro (3.2) ----------
 export type Hospedagem = 'api_externa' | 'on_premise' | 'nuvem_homologada';
 
@@ -288,6 +327,36 @@ export interface ToolInput {
   explicacao_linguagem_simples?: string;
   sinapses_id?: string;
   proxima_revisao_em?: string;
+}
+
+/** Atualização parcial da ficha/dossiê (#14) — todos os campos opcionais. */
+export interface ToolUpdateInput {
+  nome?: string;
+  descricao?: string | null;
+  unidade_responsavel?: string;
+  categoria_risco?: CategoriaRisco | null;
+  justificativa_risco?: string | null;
+  vedacoes_checklist?: Record<string, boolean>;
+  grau_supervisao_humana?: string;
+  revisao_humana_obrigatoria?: boolean;
+  explicacao_linguagem_simples?: string | null;
+  sinapses_id?: string | null;
+  proxima_revisao_em?: string | null;
+  status_ciclo_vida?: string;
+  categoria_risco_cnj?: string | null;
+  processo_sei?: string | null;
+  estagio_gexia?: string | null;
+  fase_gexia?: string | null;
+  desenvolvimento?: string | null;
+  instituicao_parceira?: string | null;
+  interfaces_institucionais?: string | null;
+  riscos_identificados?: string[];
+  proximos_passos?: string | null;
+  status_governanca?: string | null;
+  analista_responsavel?: string | null;
+  documento_origem?: string | null;
+  data_analise?: string | null;
+  observacoes?: string | null;
 }
 
 export interface AgentSpec {
@@ -576,6 +645,12 @@ export interface GateCheck {
   passou: boolean;
 }
 
+export interface GateBloqueio {
+  tipo: string; // 'vedacao' | 'ripd'
+  chave: string | null;
+  detalhe: string;
+}
+
 export interface Gate {
   id: string;
   version_id: string;
@@ -585,6 +660,7 @@ export interface Gate {
   decisao?: 'aprovado' | 'reprovado' | null;
   justificativa?: string;
   checks: GateCheck[];
+  bloqueios?: GateBloqueio[];
 }
 
 export interface GateInput {

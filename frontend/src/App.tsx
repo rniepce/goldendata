@@ -13,8 +13,10 @@ import { CallbackScreen } from './features/auth/CallbackScreen';
 // tirando bibliotecas pesadas (ex.: gráficos dos Indicadores) do bundle inicial.
 const PainelPage = lazy(() => import('./features/painel/PainelPage').then((m) => ({ default: m.PainelPage })));
 const BuscaPage = lazy(() => import('./features/busca/BuscaPage').then((m) => ({ default: m.BuscaPage })));
+const CockpitPage = lazy(() => import('./features/cockpit/CockpitPage').then((m) => ({ default: m.CockpitPage })));
 const ConhecimentoPage = lazy(() => import('./features/conhecimento/ConhecimentoPage').then((m) => ({ default: m.ConhecimentoPage })));
 const ResponderSeiPage = lazy(() => import('./features/responderSei/ResponderSeiPage').then((m) => ({ default: m.ResponderSeiPage })));
+const GovernancaKanbanPage = lazy(() => import('./features/governanca/GovernancaKanbanPage').then((m) => ({ default: m.GovernancaKanbanPage })));
 const CatalogPage = lazy(() => import('./features/catalog/CatalogPage').then((m) => ({ default: m.CatalogPage })));
 const ToolDetailPage = lazy(() => import('./features/toolDetail/ToolDetailPage').then((m) => ({ default: m.ToolDetailPage })));
 const ToolVersionsPage = lazy(() => import('./features/toolVersions/ToolVersionsPage').then((m) => ({ default: m.ToolVersionsPage })));
@@ -39,6 +41,7 @@ export function App(): ReactNode {
       >
         <Route index element={<Navigate to="/painel" replace />} />
         <Route path="/painel" element={<PainelPage />} />
+        <Route path="/cockpit" element={<CockpitPage />} />
         <Route path="/busca" element={<BuscaPage />} />
         <Route path="/conhecimento" element={<ConhecimentoPage />} />
         <Route
@@ -50,6 +53,14 @@ export function App(): ReactNode {
           }
         />
         <Route path="/catalogo" element={<CatalogPage />} />
+        <Route
+          path="/governanca"
+          element={
+            <RequireAuth roles={['owner_ferramenta', 'coordenador_comite', 'admin']}>
+              <GovernancaKanbanPage />
+            </RequireAuth>
+          }
+        />
         <Route path="/ferramentas/:id" element={<ToolDetailPage />} />
         <Route path="/ferramentas/:id/versoes" element={<ToolVersionsPage />} />
         <Route path="/golden-datasets" element={<GoldenDatasetsPage />} />

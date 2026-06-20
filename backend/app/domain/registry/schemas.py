@@ -61,6 +61,39 @@ class ToolCreate(BaseModel):
     origem_registro: str | None = None
 
 
+class ToolUpdate(BaseModel):
+    """Atualização parcial da ficha/dossiê (#14). Código institucional e tipo são
+    estruturais e não editáveis aqui."""
+
+    nome: str | None = Field(default=None, min_length=1)
+    descricao: str | None = None
+    unidade_responsavel: str | None = Field(default=None, min_length=1)
+    categoria_risco: RiskCategory | None = None
+    justificativa_risco: str | None = None
+    vedacoes_checklist: dict[str, Any] | None = None
+    grau_supervisao_humana: SupervisionLevel | None = None
+    revisao_humana_obrigatoria: bool | None = None
+    explicacao_linguagem_simples: str | None = None
+    sinapses_id: str | None = None
+    proxima_revisao_em: date | None = None
+    status_ciclo_vida: LifecycleStage | None = None
+    # Dossiê de Governança GEX-IA (CNJ 615)
+    categoria_risco_cnj: str | None = None
+    processo_sei: str | None = None
+    estagio_gexia: str | None = None
+    fase_gexia: str | None = None
+    desenvolvimento: str | None = None
+    instituicao_parceira: str | None = None
+    interfaces_institucionais: str | None = None
+    riscos_identificados: list[str] | None = None
+    proximos_passos: str | None = None
+    status_governanca: str | None = None
+    analista_responsavel: str | None = None
+    documento_origem: str | None = None
+    data_analise: date | None = None
+    observacoes: str | None = None
+
+
 class PromptVersionCreate(BaseModel):
     versao: str
     conteudo: str

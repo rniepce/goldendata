@@ -35,6 +35,12 @@ def list_tools(ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
     return service.list_tools(ctx.conn)
 
 
+@router.patch("/tools/{tool_id}")
+def update_tool(tool_id: str, body: schemas.ToolUpdate, ctx: Ctx = Depends(get_ctx), _=Depends(_EDIT)):
+    _ensure_tool(ctx, tool_id)
+    return service.update_tool(ctx.conn, tool_id, body)
+
+
 @router.get("/tools/{tool_id}/ficha")
 def get_ficha(tool_id: str, ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
     ficha = service.get_ficha_tecnica(ctx.conn, tool_id)

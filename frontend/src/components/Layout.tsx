@@ -19,6 +19,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { to: '/painel', label: 'Painel' },
+  { to: '/cockpit', label: 'Cockpit' },
   { to: '/busca', label: 'Busca' },
   { to: '/conhecimento', label: 'Conhecimento' },
   {
@@ -27,6 +28,11 @@ const NAV_ITEMS: NavItem[] = [
     roles: ['owner_ferramenta', 'coordenador_comite', 'admin'],
   },
   { to: '/catalogo', label: 'Catálogo' },
+  {
+    to: '/governanca',
+    label: 'Governança',
+    roles: ['owner_ferramenta', 'coordenador_comite', 'admin'],
+  },
   { to: '/golden-datasets', label: 'Golden datasets' },
   { to: '/avaliacoes', label: 'Avaliações' },
   { to: '/anotacao', label: 'Anotação (HITL)', roles: ['avaliador', 'coordenador_comite', 'admin'] },
