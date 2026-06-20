@@ -25,6 +25,7 @@ import { PromptVersionForm } from './PromptVersionForm';
 import { ToolVersionForm } from './ToolVersionForm';
 import { DataInventoryForm } from './DataInventoryForm';
 import { ConformidadeCard } from './ConformidadeCard';
+import { CoerenciaCard } from './CoerenciaCard';
 import { SaudeCard } from './SaudeCard';
 import { DossieEditForm } from './DossieEditForm';
 
@@ -134,6 +135,8 @@ export function ToolDetailPage(): ReactNode {
       <SaudeCard toolId={ferramenta.id} />
 
       <ConformidadeCard toolId={ferramenta.id} />
+
+      <CoerenciaCard toolId={ferramenta.id} />
 
       <div className="gd-tabs" role="tablist" aria-label="Seções da ficha técnica" style={{ marginTop: 'var(--gd-space-4)' }}>
         {SECTIONS.map((section) => (

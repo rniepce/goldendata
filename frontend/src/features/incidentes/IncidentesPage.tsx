@@ -5,6 +5,8 @@
  */
 
 import { useState, type FormEvent, type ReactNode } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { api } from '../../lib/api';
 import { useAuth, hasAnyRole } from '../../lib/auth-oidc';
 import {
   useCreateIncidente,
@@ -53,6 +55,15 @@ function IncidenteForm({ onDone }: { onDone: () => void }): ReactNode {
   const [comunicado, setComunicado] = useState('');
   const [cumprido, setCumprido] = useState(false);
 
+  const estruturar = useMutation({
+    mutationFn: () => api.redigirIncidente(toolId, descricao),
+    onSuccess: (r) => {
+      if (r.sugestao.descricao_evento) setDescricao(r.sugestao.descricao_evento);
+      if (r.sugestao.causa) setCausa(r.sugestao.causa);
+      if (r.sugestao.medida_correcao) setMedida(r.sugestao.medida_correcao);
+    },
+  });
+
   function onSubmit(e: FormEvent): void {
     e.preventDefault();
     create.mutate(
@@ -85,6 +96,18 @@ function IncidenteForm({ onDone }: { onDone: () => void }): ReactNode {
         <TextField label="Comunicado em" type="datetime-local" value={comunicado} onChange={setComunicado} />
       </div>
       <TextAreaField label="Descrição do evento" required value={descricao} onChange={setDescricao} rows={3} />
+      <div className="gd-row" style={{ marginBottom: '1rem' }}>
+        <button
+          type="button"
+          className="gd-btn gd-btn--secondary gd-btn--sm"
+          onClick={() => estruturar.mutate()}
+          disabled={estruturar.isPending || !toolId || descricao.trim().length < 3}
+          title="Estrutura causa e medida a partir da descrição"
+        >
+          {estruturar.isPending ? 'Estruturando…' : 'Estruturar com IA'}
+        </button>
+        {estruturar.isError && <ErrorAlert error={estruturar.error} />}
+      </div>
       <TextAreaField label="Causa" value={causa} onChange={setCausa} rows={2} />
       <TextAreaField label="Medida de correção" value={medida} onChange={setMedida} rows={2} />
       <CheckboxField label="Prazo de 72h cumprido" checked={cumprido} onChange={setCumprido} />

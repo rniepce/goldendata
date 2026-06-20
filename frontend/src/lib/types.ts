@@ -321,6 +321,20 @@ export interface DemandaTriagemInput {
   categoria?: string | null;
 }
 
+// ---------- Add-ons de IA (Tier C) ----------
+export interface IncidenteSugestao {
+  descricao_evento?: string;
+  causa?: string;
+  medida_correcao?: string;
+}
+
+export interface DemandaSugestaoIA {
+  categoria?: string;
+  risco_sugerido?: string;
+  prioridade?: string;
+  justificativa?: string;
+}
+
 // ---------- Incidentes (#1 — SLA 72h) ----------
 export interface Incidente {
   id: string;

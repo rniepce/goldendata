@@ -34,11 +34,13 @@ import type {
   ComentarioInput,
   Demanda,
   DemandaInput,
+  DemandaSugestaoIA,
   DemandaTriagemInput,
   Encaminhamento,
   EncaminhamentoInput,
   Incidente,
   IncidenteInput,
+  IncidenteSugestao,
   RiscoSugestao,
   ToolSaude,
   ConformidadeResultado,
@@ -298,6 +300,18 @@ export const api = {
   briefingReuniao: (): Promise<BriefingReuniao> => request('/ia/briefing-reuniao'),
   vigilia: (): Promise<{ boletim: string; contadores: CockpitData['contadores'] }> =>
     request('/ia/vigilia'),
+  redigirIncidente: (
+    toolId: string,
+    descricaoBreve: string,
+  ): Promise<{ sugestao: IncidenteSugestao; bruto: string | null }> =>
+    request('/ia/redigir-incidente', {
+      method: 'POST',
+      body: { tool_id: toolId, descricao_breve: descricaoBreve },
+    }),
+  triarDemandaIA: (titulo: string, problema?: string): Promise<{ sugestao: DemandaSugestaoIA }> =>
+    request('/ia/triar-demanda', { method: 'POST', body: { titulo, problema } }),
+  coerencia: (toolId: string): Promise<{ tool_id: string; achados: string }> =>
+    request(`/ia/coerencia/${toolId}`),
 
   // Iniciativas do GEX-IA (Painel)
   listIniciativas: (params?: {

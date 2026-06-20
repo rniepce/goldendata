@@ -6,6 +6,8 @@
 
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
+import { api } from '../../lib/api';
 import { useAuth, hasAnyRole } from '../../lib/auth-oidc';
 import { useCreateDemanda, useDemandas, useTriarDemanda } from '../../lib/queries';
 import {
@@ -71,6 +73,12 @@ function DemandaForm({ onDone }: { onDone: () => void }): ReactNode {
 
 function TriagemControls({ demanda }: { demanda: Demanda }): ReactNode {
   const triar = useTriarDemanda();
+  const sugerir = useMutation({
+    mutationFn: () => api.triarDemandaIA(demanda.titulo, demanda.problema ?? undefined),
+    onSuccess: (r) => {
+      if (r.sugestao.categoria) setCategoria(r.sugestao.categoria);
+    },
+  });
   const [modo, setModo] = useState<'' | 'aceitar' | 'recusar' | 'devolver'>('');
   const [categoria, setCategoria] = useState('suporte');
   const [motivo, setMotivo] = useState('');
@@ -94,8 +102,23 @@ function TriagemControls({ demanda }: { demanda: Demanda }): ReactNode {
       ) : (
         <div className="gd-row" style={{ flexWrap: 'wrap', alignItems: 'flex-end', gap: '0.5rem' }}>
           {modo === 'aceitar' ? (
-            <div style={{ minWidth: 200 }}>
+            <div style={{ minWidth: 220 }}>
               <SelectField label="Categoria da iniciativa" value={categoria} onChange={setCategoria} options={CATEGORIA_OPTIONS} />
+              <button
+                type="button"
+                className="gd-btn gd-btn--text gd-btn--sm"
+                style={{ marginTop: '0.25rem' }}
+                onClick={() => sugerir.mutate()}
+                disabled={sugerir.isPending}
+              >
+                {sugerir.isPending ? 'Sugerindo…' : 'Sugerir categoria (IA)'}
+              </button>
+              {sugerir.data?.sugestao && (
+                <p style={{ fontSize: '0.78rem', color: 'var(--gd-color-text-muted)', margin: '0.25rem 0 0' }}>
+                  IA: risco {sugerir.data.sugestao.risco_sugerido ?? '—'}
+                  {sugerir.data.sugestao.justificativa ? ` — ${sugerir.data.sugestao.justificativa}` : ''}
+                </p>
+              )}
             </div>
           ) : (
             <div style={{ minWidth: 240, flex: 1 }}>

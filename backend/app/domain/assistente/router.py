@@ -624,6 +624,107 @@ def vigilia(ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
     return {"boletim": boletim, "contadores": c}
 
 
+# ---------------- IA: redator de relato de incidente (#62) ----------------
+class RedigirIncidente(BaseModel):
+    tool_id: str
+    descricao_breve: str = Field(min_length=3)
+
+
+@router.post("/ia/redigir-incidente")
+def redigir_incidente(body: RedigirIncidente, ctx: Ctx = Depends(get_ctx), _=Depends(_EDIT_DOC)):
+    tool = registry_svc.get_tool(ctx.conn, body.tool_id)
+    system = (
+        "Você é analista de governança de IA do TJMG. A partir de uma descrição informal de um "
+        "incidente com IA, estruture-o em JSON com as chaves: descricao_evento, causa, "
+        "medida_correcao — em linguagem institucional objetiva. Não invente fatos além do relato. "
+        + _CNJ_RISCO
+    )
+    user = f"Ferramenta: {tool.get('nome') if tool else '—'}\nRelato informal: {body.descricao_breve}"
+    try:
+        bruto = ia.chamar(system, user, max_tokens=500)
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    dados = doctext.parse_primeiro_json(bruto)
+    return {"sugestao": dados, "bruto": None if dados else bruto}
+
+
+# ---------------- IA: triagem assistida de demanda (#61) ----------------
+class TriarDemandaIA(BaseModel):
+    titulo: str = Field(min_length=2)
+    problema: str | None = None
+
+
+@router.post("/ia/triar-demanda")
+def triar_demanda_ia(body: TriarDemandaIA, ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
+    system = (
+        "Você triagem demandas de IA do GEX-IA (TJMG). A partir do título/problema, responda "
+        "APENAS um JSON com: categoria (uma de solucao_ia|educacional|suporte|"
+        "governanca_normativo|cooperacao|pesquisa_prospeccao), risco_sugerido (alto|baixo|"
+        "indefinido), prioridade (baixa|media|alta) e justificativa (1 frase). A decisão é humana. "
+        + _CNJ_RISCO
+    )
+    try:
+        bruto = ia.chamar(
+            system, f"Título: {body.titulo}\nProblema: {body.problema or '—'}", max_tokens=400
+        )
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    return {"sugestao": doctext.parse_primeiro_json(bruto)}
+
+
+# ---------------- IA: coerência ficha × evidências (#59) ----------------
+@router.get("/ia/coerencia/{tool_id}")
+def coerencia(tool_id: str, ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
+    ficha = registry_svc.get_ficha_tecnica(ctx.conn, tool_id)
+    if ficha is None:
+        raise HTTPException(404, "Ferramenta não encontrada")
+    f = ficha["ferramenta"]
+    di = ficha.get("data_inventory") or []
+    kpi = fetch_one(
+        ctx.conn,
+        "SELECT taxa_aceitacao, taxa_alucinacao FROM kpi_quality WHERE tool_id=%s "
+        "ORDER BY calculado_em DESC LIMIT 1",
+        (tool_id,),
+    )
+    gates = [
+        r["resultado"]
+        for r in fetch_all(
+            ctx.conn,
+            "SELECT pg.resultado::text AS resultado FROM promotion_gate pg "
+            "JOIN tool_version tv ON tv.id = pg.tool_version_id WHERE tv.tool_id=%s",
+            (tool_id,),
+        )
+    ]
+    pessoais = any(d.get("contem_dados_pessoais") for d in di)
+    contexto = (
+        f"DECLARADO — risco: {f.get('categoria_risco')} (CNJ {f.get('categoria_risco_cnj')}); "
+        f"revisão humana obrigatória: {f.get('revisao_humana_obrigatoria')}; "
+        f"grau supervisão: {f.get('grau_supervisao_humana')}; "
+        f"status ciclo de vida: {f.get('status_ciclo_vida')}; estágio: {f.get('estagio_gexia')}.\n"
+        f"EVIDÊNCIAS — itens de inventário: {len(di)} (contém dados pessoais: {pessoais}); "
+        f"KPI mais recente: aceitação {kpi.get('taxa_aceitacao') if kpi else '—'}, "
+        f"alucinação {kpi.get('taxa_alucinacao') if kpi else '—'}; "
+        f"gates: {gates or 'nenhum'}."
+    )
+    system = (
+        "Você é auditor de governança de IA do TJMG. Aponte INCONSISTÊNCIAS entre o que a ficha "
+        "DECLARA e o que as EVIDÊNCIAS mostram — ex.: risco baixo com alucinação alta; 'em "
+        "produção' sem gate aprovado; processa dados pessoais sem inventário. Liste só achados "
+        "reais, em tópicos curtos com a severidade. Se estiver coerente, diga isso. " + _CNJ_RISCO
+    )
+    try:
+        achados = ia.chamar(system, contexto, max_tokens=500)
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    return {"tool_id": tool_id, "achados": achados}
+
+
 @router.get("/ia/disponivel")
 def ia_disponivel(ctx: Ctx = Depends(get_ctx), _=Depends(_READ)):
     return {"disponivel": ia.disponivel()}
